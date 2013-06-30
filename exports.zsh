@@ -16,13 +16,6 @@ export DOWNLOAD_DIR="$HOME/Downloads"
 export APPLICATION_DIR="/Applications"
 export DROPBOX_DIR="$HOME/Dropbox"
 
-# Concordia
-export CONCORDIA_DIR="$DROPBOX_DIR/concordia"
-export COMP476_DIR="$CONCORDIA_DIR/winter_2013/comp476"
-export ENCS393_DIR="$CONCORDIA_DIR/winter_2013/encs393"
-export SOEN422_DIR="$CONCORDIA_DIR/winter_2013/soen422"
-export SOEN422_PROJECT_DIR="$SOEN422_DIR/teensyawesome/project"
-
 # Interests
 export URBANISM_DIR="$DROPBOX_DIR/urbanism"
 
