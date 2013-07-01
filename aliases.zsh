@@ -12,6 +12,7 @@ alias dow="cd $DOWNLOAD_DIR"
 alias dbox="cd $DROPBOX_DIR"
 
 # ls
+alias ls=" ls"
 alias ll='ls -l'
 alias la='ls -al'
 
