@@ -44,11 +44,12 @@ autoload -U colors
 colors
 setopt prompt_subst
 
-ZSH_SRC="$HOME/.zsh"
-source $ZSH_SRC/exports.zsh
-source $ZSH_SRC/rvm.zsh
-source $ZSH_SRC/aliases.zsh
-source $ZSH_SRC/pythonbrew.zsh
 umask 007
 
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
+[[ -s "$HOME/.pythonbrew/etc/bashrc" ]] && source "$HOME/.pythonbrew/etc/bashrc"
+
+rvm_script=$HOME/.rvm/scripts/rvm
+if [[ -s $rvm_script ]]
+then
+    source $rvm_script
+fi
