@@ -1,0 +1,20 @@
+[user]
+	name = Alex Landovskis
+	email = alex@landovskis.com
+[core]
+	editor = emacs
+	pager = less
+	autocrlf = input
+	whitespace = trailing-space,space-before-tab
+[alias]
+	co = checkout
+	br = branch
+	ci = commit
+	st = status
+	unstage = rm --cached
+	last = log -1 HEAD
+	lol = log --pretty=oneline --abbrev-commit --graph --decorate
+	lola = log --pretty=oneline --abbrev-commit --graph --decorate --all
+	remotes = remote -v
+[color]
+	ui = true
