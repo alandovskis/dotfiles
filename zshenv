@@ -1,7 +1,12 @@
+ARDUINO_TOOLS_DIR="/Applications/Arduino.app/Contents/Resources/Java/hardware/tools"
 
-export PATH=PATH=$HOME/.rvm/bin:/usr/local/texlive/2012/bin/universal-darwin:/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/teensy.app/Contents/MacOS:/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin
-export LDFLAGS="-L/usr/local/opt/openssl/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl/include"
+PATH="${HOME}/.rvm/bin:/usr/local/texlive/2012/bin/universal-darwin"
+PATH="${PATH}:${ARDUINO_TOOLS_DIR}/teensy.app/Contents/MacOS"
+PATH="${PATH}:${ARDUINO_TOOLS_DIR}/avr/bin:/usr/local/bin"
+export PATH="${PATH}:/usr/bin:/bin:/usr/sbin:/sbin"
+
+export LDFLAGS="-L/usr/local/opt/openssl/lib -L/usr/local/opt/gettext/lib"
+export CPPFLAGS="-I/usr/local/opt/openssl/include -I/usr/local/opt/gettext/include"
 
 # -------------
 # | Variables |
