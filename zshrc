@@ -33,10 +33,12 @@ export UPDATE_ZSH_DAYS=13
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
-plugins=(git bundler brew gem rvm git-flow mercurial vagrant)
+plugins=(git brew gem rvm git-flow mercurial vagrant)
 
 # Do not add commands with a prefix of a space to the history.
 HIST_IGNORE_SPACE="true"
+
+fpath=(/usr/local/share/zsh-completions $fpath)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -53,3 +55,34 @@ if [[ -s $rvm_script ]]
 then
     source $rvm_script
 fi
+# -----------
+# | Aliases |
+# -----------
+# General
+alias app="cd $APPLICATION_DIR"
+alias doc="cd $DOCUMENT_DIR"
+alias mov="cd $MOVIE_DIR"
+alias img="cd $IMAGE_DIR"
+alias mus="cd $MUSIC_DIR"
+alias sit="cd $SITE_DIR"
+alias dow="cd $DOWNLOAD_DIR"
+alias dbox="cd $DROPBOX_DIR"
+
+# ls
+alias ls=" ls"
+alias ll='ls -l'
+alias la='ls -al'
+
+# Ping
+alias pingg="ping -c 4 google.com"
+alias pingr="ping -c 4 192.168.100.1"
+alias pingns="ping -c 4 8.8.8.8; ping -c 4 8.8.4.4"
+alias pinga="pingr && pingns && pingg"
+
+# Interests
+alias urbs="cd $URBANISM_DIR"
+
+# Emacs
+alias emacsd="$EMACS --daemon"
+alias emacsg="$EMACS_CLIENT -c &"
+alias emacs="$EMACS_CLIENT -t"
