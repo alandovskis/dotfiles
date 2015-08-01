@@ -1,6 +1,6 @@
 ARDUINO_TOOLS_DIR="/Applications/Arduino.app/Contents/Resources/Java/hardware/tools"
 
-PATH="${HOME}/.rvm/bin:/usr/local/texlive/2012/bin/universal-darwin"
+PATH="${HOME}/bin:${HOME}/.rvm/bin:/usr/local/texlive/2012/bin/universal-darwin"
 PATH="${PATH}:${ARDUINO_TOOLS_DIR}/teensy.app/Contents/MacOS"
 PATH="${PATH}:${ARDUINO_TOOLS_DIR}/avr/bin:/usr/local/bin"
 export PATH="${PATH}:/usr/bin:/bin:/usr/sbin:/sbin"
