@@ -19,7 +19,6 @@
      ;; <M-m f e R> (Emacs style) to install them.
      ;; ----------------------------------------------------------------
      auto-completion
-     auctex
      ;; better-defaults
      c-c++
      emacs-lisp
@@ -29,6 +28,7 @@
      html
      ibuffer
      javascript
+     latex
      org
      osx
      markdown
