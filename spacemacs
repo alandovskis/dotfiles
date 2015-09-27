@@ -36,7 +36,6 @@
      python
      ruby
      search-engine
-     ;semantic
      shell-scripts
      shell
      version-control
