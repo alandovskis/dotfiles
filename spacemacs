@@ -42,7 +42,6 @@ values."
      org
      osx
      markdown
-     pcre2el
      python
      ruby
      ruby-on-rails
