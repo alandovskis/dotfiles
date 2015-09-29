@@ -27,24 +27,32 @@ values."
      auto-completion
      ;; better-defaults
      c-c++
+     colors
+     cscope
      emacs-lisp
      evil-commentary
      eyebrowse
      git
      html
      ibuffer
+     java
      javascript
      latex
+     lua
      org
      osx
      markdown
      pcre2el
      python
      ruby
+     ruby-on-rails
      search-engine
      shell-scripts
      shell
+     spell-checking
      version-control
+     windows-scripts
+     yaml
 
      alandovskis-c
      alandovskis-misc
