@@ -55,6 +55,7 @@ values."
 
      alandovskis-c
      alandovskis-misc
+     alandovskis-ruby
      alandovskis-shell
      alandovskis-snmp
      alandovskis-vc
