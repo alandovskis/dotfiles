@@ -50,6 +50,7 @@ values."
      shell-scripts
      shell
      spell-checking
+     (syntax-checking :variables syntax-checking-enable-tooltips t)
      version-control
      windows-scripts
      yaml
