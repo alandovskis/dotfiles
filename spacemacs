@@ -46,6 +46,7 @@ values."
      ruby
      ruby-on-rails
      search-engine
+     semantic
      shell-scripts
      shell
      spell-checking
