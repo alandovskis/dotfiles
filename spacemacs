@@ -56,6 +56,7 @@ values."
      alandovskis-c
      alandovskis-misc
      alandovskis-shell
+     alandovskis-snmp
      alandovskis-vc
    )
    ;; List of additional packages that will be installed without being
