@@ -5,6 +5,7 @@ PATH="/usr/local/texlive/2012/bin/universal-darwin:${PATH}"
 PATH="${ARDUINO_TOOLS_DIR}/teensy.app/Contents/MacOS:${PATH}"
 PATH="${ARDUINO_TOOLS_DIR}/avr/bin:${PATH}"
 PATH="/usr/local/opt/emacs-mac/bin:${PATH}"
+PATH="/usr/local/opt/vim/bin:${PATH}"
 export PATH
 
 export LDFLAGS="-L/usr/local/opt/openssl/lib -L/usr/local/opt/gettext/lib"
