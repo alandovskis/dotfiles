@@ -81,8 +81,3 @@ alias pinga="pingr && pingns && pingg"
 
 # Interests
 alias urbs="cd $URBANISM_DIR"
-
-# Emacs
-alias emacsd="$EMACS --daemon"
-alias emacsg="$EMACS_CLIENT -c &"
-alias emacs="$EMACS_CLIENT -t"

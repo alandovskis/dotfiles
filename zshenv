@@ -29,7 +29,3 @@ export URBANISM_DIR="$DROPBOX_DIR/urbanism"
 export PYTHON_DIR="$DROPBOX_DIR/python"
 export RUBY_DIR="$DROPBOX_DIR/ruby"
 export RAILS_DIR="$RUBY_DIR/rails"
-
-export EMACS_DIR="/Applications/Emacs.app/Contents/MacOS"
-export EMACS="$EMACS_DIR/Emacs"
-export EMACS_CLIENT="$EMACS_DIR/bin/emacsclient"
