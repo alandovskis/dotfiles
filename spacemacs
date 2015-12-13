@@ -42,7 +42,9 @@ values."
      osx
      markdown
      python
-     ruby
+     (ruby :variables
+           ruby-test-runner 'rspec
+           ruby-version-manager 'rvm)
      ruby-on-rails
      search-engine
      semantic
