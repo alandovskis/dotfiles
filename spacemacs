@@ -52,6 +52,7 @@ values."
      (shell :variables
             shell-default-height 30
             shell-default-position 'bottom)
+     spacemacs-layouts
      spell-checking
      (syntax-checking :variables syntax-checking-enable-tooltips t)
      (version-control :variables version-control-diff-tool 'diff-hl)
