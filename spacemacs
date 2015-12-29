@@ -45,6 +45,7 @@ values."
      python
      ruby
      ruby-on-rails
+     rust
      search-engine
      semantic
      shell-scripts
