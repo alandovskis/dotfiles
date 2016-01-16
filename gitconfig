@@ -2,7 +2,7 @@
 	name = Alex Landovskis
 	email = alex@landovskis.com
 [core]
-	editor = emacs
+	editor = vim
 	pager = less
 	autocrlf = input
 	whitespace = trailing-space,space-before-tab
