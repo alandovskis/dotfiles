@@ -31,6 +31,7 @@ values."
      cscope
      emacs-lisp
      evil-commentary
+     eyebrowse
      git
      html
      ibuffer
