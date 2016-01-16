@@ -6,9 +6,6 @@ PATH="/usr/local/opt/git/bin:${PATH}"
 PATH="/usr/local/opt/vim/bin:${PATH}"
 export PATH
 
-export LDFLAGS="-L/usr/local/opt/openssl/lib -L/usr/local/opt/gettext/lib"
-export CPPFLAGS="-I/usr/local/opt/openssl/include -I/usr/local/opt/gettext/include"
-
 # -------------
 # | Variables |
 # -------------
