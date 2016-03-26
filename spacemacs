@@ -276,6 +276,7 @@ layers configuration. You are free to put any user code."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(paradox-display-star-count nil)
+ '(diff-hl-draw-borders nil)
  '(paradox-column-width-version 13)
- '(paradox-github-token t))
+ '(paradox-display-star-count nil)
+ '(paradox-github-token t)
