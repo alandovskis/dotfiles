@@ -57,6 +57,7 @@ values."
      spacemacs-layouts
      spell-checking
      (syntax-checking :variables syntax-checking-enable-tooltips t)
+     themes-megapack
      (version-control :variables version-control-diff-tool 'diff-hl)
      windows-scripts
      yaml
