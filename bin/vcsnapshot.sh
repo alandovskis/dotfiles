@@ -16,10 +16,25 @@ function fatal()
 
 function do_git()
 {
-    git stash save -u "${SNAPSHOT_MESSAGE}" >/dev/null 2>&1 || fatal "Error: Unable to save stash."
+    SNAPSHOT_TARGET=""
+    DIRTY_WORKING_DIR=0
+
+    [ $(git status -s | wc -l | tr -d '') -gt 0 ] && DIRTY_WORKING_DIR=1
+
+    if [ ${DIRTY_WORKING_DIR} -eq 1 ]
+    then
+        git stash save -u "${SNAPSHOT_MESSAGE}" >/dev/null 2>&1 || fatal "Error: Unable to save stash."
+        SNAPSHOT_TARGET="stash@{0}"
+    fi
+
     git rev-parse --verify ${SNAPSHOT_BRANCH} >/dev/null 2>&1 && SNAPSHOT_BRANCH="${SNAPSHOT_BRANCH}-${TIMESTAMP}"
-    git branch ${SNAPSHOT_BRANCH} stash@{0} >/dev/null 2>&1 || fatal "Error: Unable to create branch."
-    git stash pop >/dev/null 2>&1 || fatal "Error: Unable to pop stash."
+    git branch ${SNAPSHOT_BRANCH} ${SNAPSHOT_TARGET} >/dev/null 2>&1 || fatal "Error: Unable to create branch."
+
+    if [ ${DIRTY_WORKING_DIR} -eq 1 ]
+    then
+        git stash pop >/dev/null 2>&1 || fatal "Error: Unable to pop stash."
+    fi
+
     git ls-remote ${SNAPSHOT_REMOTE} >/dev/null 2>&1 && git push ${SNAPSHOT_REMOTE} ${SNAPSHOT_BRANCH} >/dev/null 2>&1
 }
 
