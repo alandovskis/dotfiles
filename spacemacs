@@ -49,7 +49,6 @@ values."
      ruby-on-rails
      rust
      search-engine
-     semantic
      shell-scripts
      (shell :variables
             shell-default-height 30
