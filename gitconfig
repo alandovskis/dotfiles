@@ -14,6 +14,7 @@
   lol = log --pretty=oneline --abbrev-commit --graph --decorate
   lola = log --pretty=oneline --abbrev-commit --graph --decorate --all
   remotes = remote -v
+  root = rev-parse --show-toplevel
   st = status
   unstage = rm --cached
 [color]
