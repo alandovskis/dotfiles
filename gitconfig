@@ -16,6 +16,7 @@
   lola = log --pretty=oneline --abbrev-commit --graph --decorate --all
   remotes = remote -v
   root = rev-parse --show-toplevel
+  sha1 = !sh -c 'git rev-parse --short ${1:-HEAD}' --
   st = status
   unstage = rm --cached
 [color]
