@@ -10,6 +10,7 @@
   br = branch
   ci = commit
   co = checkout
+  detach = !sh -c 'git checkout $(git rev-parse ${1:-HEAD})' --
   last = log -1 HEAD
   lol = log --pretty=oneline --abbrev-commit --graph --decorate
   lola = log --pretty=oneline --abbrev-commit --graph --decorate --all
