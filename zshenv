@@ -1,6 +1,6 @@
 
 PATH="${HOME}/bin:${HOME}/.rvm/bin:${PATH}"
-PATH="/usr/local/texlive/2012/bin/universal-darwin:${PATH}"
+PATH="/usr/local/texlive/2016/bin/x86_64-darwin:${PATH}"
 PATH="/usr/local/opt/emacs-mac/bin:${PATH}"
 PATH="/usr/local/opt/git/bin:${PATH}"
 PATH="/usr/local/opt/vim/bin:${PATH}"
