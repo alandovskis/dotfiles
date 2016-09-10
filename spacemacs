@@ -106,6 +106,7 @@ values."
                                     gruber-darker-theme
                                     gruvbox-theme
                                     hc-zenburn-theme
+                                    helm-gitignore
                                     hemisu-theme
                                     heroku-theme
                                     inkpot-theme
