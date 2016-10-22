@@ -46,6 +46,7 @@ values."
      emacs-lisp
      evil-commentary
      git
+     graphviz
      helm
      html
      ibuffer
@@ -56,6 +57,7 @@ values."
      org
      osx
      markdown
+     plantuml
      python
      (ruby :variables
            ruby-test-runner 'rspec
@@ -86,7 +88,7 @@ values."
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
    ;; configuration in `dotspacemacs/user-config'.
-   dotspacemacs-additional-packages '(graphviz-dot-mode plantuml-mode vkill)
+   dotspacemacs-additional-packages '(vkill)
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
    ;; A list of packages that will not be installed and loaded.
