@@ -48,9 +48,9 @@ values."
      evil-commentary
      git
      graphviz
-     helm
      html
      ibuffer
+     ivy
      java
      javascript
      latex
