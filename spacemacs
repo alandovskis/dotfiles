@@ -78,6 +78,7 @@ values."
      windows-scripts
      yaml
 
+     alandovskis-asm
      alandovskis-c
      alandovskis-misc
      alandovskis-ruby
