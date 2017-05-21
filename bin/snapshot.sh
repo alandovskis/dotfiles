@@ -51,6 +51,7 @@ do_snapshot()
 
     tar -X ${IGNORE_FILE} -c -v -f ${snapshot_tar} ${TARGET}
     xz -c ${snapshot_tar} > ${snapshot_file}
+    rm -f ${snapshot_tar}
 }
 
 do_cleanup()
