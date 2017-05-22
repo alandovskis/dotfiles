@@ -12,7 +12,7 @@ if [[ -z "${TMPDIR}" ]]; then
 fi
 
 SNAPSHOT_A_XZ="${TMPDIR}/snapshot-a.tar.xz"
-SNAPSHOT_A_DIR="${TMPDIR}snapshot-a"
+SNAPSHOT_A_DIR="${TMPDIR}/snapshot-a"
 SNAPSHOT_A_TAR="${TMPDIR}/snapshot-a.tar"
 SNAPSHOT_B_XZ="${TMPDIR}/snapshot-b.tar.xz"
 SNAPSHOT_B_DIR="${TMPDIR}/snapshot-b"
