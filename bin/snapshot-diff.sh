@@ -2,7 +2,6 @@
 set -e
 set -u
 set -o pipefail
-IFS=$'\n\t'
 
 DOTFILE="${HOME}/.snapshot"
 
