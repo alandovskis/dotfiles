@@ -38,7 +38,8 @@ do_prep_ignores()
 
 do_snapshot()
 {
-    local snapshot_path="${SNAPSHOT_DIR}/${TARGET}"
+    local target=$(realpath ${TARGET})
+    local snapshot_path="${SNAPSHOT_DIR}/${target}"
     local snapshot_tar="${snapshot_path}/${NAME}.tar"
     local snapshot_file="${snapshot_tar}.xz"
 

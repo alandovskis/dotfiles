@@ -29,6 +29,7 @@ if [[ -z "$SNAPSHOT_DIR" ]]; then
     exit 3
 fi
 
+TARGET=$(realpath ${TARGET})
 SNAPSHOT_PATH="${SNAPSHOT_DIR}/${TARGET}"
 
 if [ ! -d "${SNAPSHOT_PATH}" ]; then
