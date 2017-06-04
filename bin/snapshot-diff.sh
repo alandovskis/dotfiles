@@ -65,12 +65,6 @@ if [[ -z "$SNAPSHOT_DIR" ]]; then
     exit 3
 fi
 
-SNAPSHOT_DIFFER=${SNAPSHOT_DIFFER:-}
-if [[ -z "$SNAPSHOT_DIFFER" ]]; then
-    echo "SNAPSHOT_DIFFER not found in ${DOTFILE}"
-    exit 3
-fi
-
 SNAPSHOT_A_PATH="${SNAPSHOT_DIR}/${TARGET}/${SNAPSHOT_A}.tar.xz"
 if [ ! -e "${SNAPSHOT_A_PATH}" ]; then
     echo "${SNAPSHOT_A} does not exist."
@@ -99,4 +93,4 @@ tar -C ${SNAPSHOT_B_DIR} -x -v -f ${SNAPSHOT_B_TAR}
 cd -
 SNAPSHOT_B="${SNAPSHOT_B_DIR}/${TARGET}"
 
-${SNAPSHOT_DIFFER} ${SNAPSHOT_A} ${SNAPSHOT_B}
+diff -ru ${SNAPSHOT_A} ${SNAPSHOT_B}
