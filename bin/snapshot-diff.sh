@@ -10,6 +10,7 @@ if [[ -z "${TMPDIR}" ]]; then
     TMPDIR="/tmp"
 fi
 
+TMP_DIRS=""
 SNAPSHOT_A_XZ="${TMPDIR}/snapshot-a.tar.xz"
 SNAPSHOT_A_DIR="${TMPDIR}/snapshot-a"
 SNAPSHOT_A_TAR="${TMPDIR}/snapshot-a.tar"
@@ -25,20 +26,46 @@ usage()
 
 do_cleanup()
 {
-    rm -rf ${SNAPSHOT_A_XZ}
-    rm -rf ${SNAPSHOT_A_TAR}
-    rm -rf ${SNAPSHOT_A_DIR}
-    rm -rf ${SNAPSHOT_B_XZ}
-    rm -rf ${SNAPSHOT_B_TAR}
-    rm -rf ${SNAPSHOT_B_DIR}
+    if [[ -z "${TMP_DIRS}" ]]; then
+        rm -rf ${TMP_DIRS}
+    fi
 }
 trap do_cleanup EXIT
+
+do_extract_snapshot()
+{
+    local name="${1}"
+    local src_archive="${SNAPSHOT_DIR}/${TARGET}/${name}.tar.xz"
+    if [ ! -e "${src_archive}" ]; then
+        echo "${name} does not exist."
+        exit 5
+    fi
+
+    local tmp_path=$(mktemp -d)
+    if [[ -z "${tmp_path}" ]]; then
+        echo "mktemp failed"
+        exit 6
+    fi
+    TMP_DIRS="${TMP_DIRS} ${tmp_path}"
+
+    local dst_archive=$(basename ${src_archive})
+    local tarball="${tmp_path}/${name}.tar"
+
+    cd ${tmp_path}
+    cp ${src_archive} ${dst_archive}
+    xz -d -k -f ${dst_archive} > ${tarball}
+    tar -C ${tmp_path} -x -v -f ${tarball}
+
+    rm -f ${dst_archive}
+    rm -f ${tarball}
+}
 
 TARGET=${1:-}
 if [[ -z "${TARGET}" ]]; then
     usage
     exit 1
 fi
+TARGET=$(realpath ${TARGET})
 
 SNAPSHOT_A=${2:-}
 if [[ -z "${SNAPSHOT_A}" ]]; then
@@ -64,32 +91,8 @@ if [[ -z "$SNAPSHOT_DIR" ]]; then
     exit 3
 fi
 
-SNAPSHOT_A_PATH="${SNAPSHOT_DIR}/${TARGET}/${SNAPSHOT_A}.tar.xz"
-if [ ! -e "${SNAPSHOT_A_PATH}" ]; then
-    echo "${SNAPSHOT_A} does not exist."
-    exit 5
-fi
+do_extract_snapshot "${SNAPSHOT_A}"
 
-cd ${TMPDIR}
-cp ${SNAPSHOT_A_PATH} ${SNAPSHOT_A_XZ}
-xz -d -f ${SNAPSHOT_A_XZ} > ${SNAPSHOT_A_TAR}
-mkdir -p ${SNAPSHOT_A_DIR}
-tar -C ${SNAPSHOT_A_DIR} -x -v -f ${SNAPSHOT_A_TAR}
-cd -
-SNAPSHOT_A="${SNAPSHOT_A_DIR}/${TARGET}"
-
-SNAPSHOT_B_PATH="${SNAPSHOT_DIR}/${TARGET}/${SNAPSHOT_B}.tar.xz"
-if [ ! -e "${SNAPSHOT_B_PATH}" ]; then
-    echo "${SNAPSHOT_B} does not exist."
-    exit 5
-fi
-
-cd ${TMPDIR}
-cp ${SNAPSHOT_B_PATH} ${SNAPSHOT_B_XZ}
-xz -d -f ${SNAPSHOT_B_XZ} > ${SNAPSHOT_B_TAR}
-mkdir -p ${SNAPSHOT_B_DIR}
-tar -C ${SNAPSHOT_B_DIR} -x -v -f ${SNAPSHOT_B_TAR}
-cd -
-SNAPSHOT_B="${SNAPSHOT_B_DIR}/${TARGET}"
+do_extract_snapshot "${SNAPSHOT_B}"
 
 diff -ru ${SNAPSHOT_A} ${SNAPSHOT_B}
