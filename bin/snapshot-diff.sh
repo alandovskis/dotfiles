@@ -54,7 +54,7 @@ do_extract_snapshot()
     cd ${tmp_path}
     cp ${src_archive} ${dst_archive}
     xz -d -k -f ${dst_archive} > ${tarball}
-    tar -C ${tmp_path} -x -v -f ${tarball}
+    tar -C ${tmp_path} -x -f ${tarball}
 
     rm -f ${dst_archive}
     rm -f ${tarball}

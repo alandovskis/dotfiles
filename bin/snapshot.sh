@@ -50,7 +50,7 @@ do_snapshot()
         exit 4
     fi
 
-    tar -X ${IGNORE_FILE} -c -v -f ${snapshot_tar} ${TARGET}
+    tar -X ${IGNORE_FILE} -c -f ${snapshot_tar} ${TARGET}
     xz -c ${snapshot_tar} > ${snapshot_file}
     rm -f ${snapshot_tar}
 }
