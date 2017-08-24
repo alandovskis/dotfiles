@@ -424,6 +424,12 @@ This is the place where most of your configurations should be done. Unless it is
 explicitly specified that a variable should be set before a package is loaded,
 you should place your code here."
   (setq nxml-slash-auto-complete-flag t)
+
+  (setq spaceline-version-control-p nil)
+  (setq spaceline-new-version-p nil)
+  (setq spaceline-battery-p nil)
+  (setq spaceline-major-mode-p nil)
+  (setq spaceline-minor-modes-p nil)
 )
 
 ;; Do not write anything past this comment. This is where Emacs will
