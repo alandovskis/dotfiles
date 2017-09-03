@@ -2,22 +2,22 @@
 	name = Alex Landovskis
 	email = alex@landovskis.com
 [core]
-  autocrlf = input
-  editor = vim
-  pager = less
-  whitespace = trailing-space,space-before-tab
+	autocrlf = input
+	editor = vim
+	pager = less
+	whitespace = trailing-space,space-before-tab
 [alias]
-  br = branch
-  ci = commit
-  co = checkout
-  detach = !sh -c 'git checkout $(git rev-parse ${1:-HEAD})' --
-  last = log -1 HEAD
-  lol = log --pretty=oneline --abbrev-commit --graph --decorate
-  lola = log --pretty=oneline --abbrev-commit --graph --decorate --all
-  remotes = remote -v
-  root = rev-parse --show-toplevel
-  sha1 = !sh -c 'git rev-parse --short ${1:-HEAD}' --
-  st = status
-  unstage = rm --cached
+	br = branch
+	ci = commit
+	co = checkout
+	detach = !sh -c 'git checkout $(git rev-parse ${1:-HEAD})' --
+	last = log -1 HEAD
+	lol = log --pretty=oneline --abbrev-commit --graph --decorate
+	lola = log --pretty=oneline --abbrev-commit --graph --decorate --all
+	remotes = remote -v
+	root = rev-parse --show-toplevel
+	sha1 = !sh -c 'git rev-parse --short ${1:-HEAD}' --
+	st = status
+	unstage = rm --cached
 [color]
 	ui = true
