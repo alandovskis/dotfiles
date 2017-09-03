@@ -1,4 +1,4 @@
-alias zshconfig="emacs ~/.zshrc"
+alias zshconfig="${EDITOR} ~/.zshrc"
 alias zshsource="source ~/.zshrc"
 
 alias app="cd $APPLICATION_DIR"

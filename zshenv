@@ -34,3 +34,5 @@ if [[ -s $rvm_script ]]
 then
     source $rvm_script
 fi
+
+export EDITOR="vim"
