@@ -26,3 +26,11 @@ export URBANISM_DIR="$DROPBOX_DIR/urbanism"
 export PYTHON_DIR="$DROPBOX_DIR/python"
 export RUBY_DIR="$DROPBOX_DIR/ruby"
 export RAILS_DIR="$RUBY_DIR/rails"
+
+[[ -s "$HOME/.pythonbrew/etc/bashrc" ]] && source "$HOME/.pythonbrew/etc/bashrc"
+
+rvm_script=$HOME/.rvm/scripts/rvm
+if [[ -s $rvm_script ]]
+then
+    source $rvm_script
+fi
