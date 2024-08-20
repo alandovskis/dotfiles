@@ -1,0 +1,92 @@
+let mapleader = " "
+
+
+" Navigation
+nmap gc :action CommentByLineComment<CR>
+nmap gd :action GotoImplementation<CR>
+nmap gD :action GotoDeclaration<CR>
+nmap j :action MethodUp<CR>
+nmap k :action MethodDown<CR>
+
+
+" Search & Replace"
+nmap <leader>/ :action FindInPath<CR>
+nmap <leader>* :action ReplaceInPath<CR>
+
+nmap <leader>d :action Debug<CR>
+
+" Files
+nmap <leader>fr :action RecentFiles<CR>
+nmap <leader>fs :action SaveAll<CR>
+nmap <leader>fx :action NewScratchFile<CR>
+
+"git
+nmap <leader>ga :action Git.Add<CR>
+nmap <leader>gbb :action Git.CheckoutRevision<CR>
+nmap <leader>gbc :action Git.CreateNewBranch<CR>
+nmap <leader>gB :action Git.Branches<CR>
+nmap <leader>gd :action Git.CompareWithBranch<CR>
+nmap <leader>gf :action Git.Fetch<CR>
+nmap <leader>gF :action Git.Pull<CR>
+nmap <leader>gl :action Git.Log<CR>
+nmap <leader>gm :action Git.Merge<CR>
+nmap <leader>gr :action Git.Rebase<CR>
+nmap <leader>gt :action Git.CreateNewTag<CR>
+nmap <leader>gx :action Git.Revert<CR>
+nmap <leader>gzz :action Git.Stash<CR>
+nmap <leader>gzz :action Git.Unstash<CR>
+
+
+" Jump
+nmap <leader>jc :action GotoClass<CR>
+nmap <leader>jf :action GotoFile<CR>
+nmap <leader>jp :action GotoSuperMethod<CR>
+nmap <leader>js :action GotoSymbol<CR>
+nmap <leader>jt :action GotoTest<CR>
+
+
+" Methods
+nmap <leader>mc :action CallHierarchy<CR>
+nmap <leader>mh :action MethodHierarchy<CR>
+nmap <leader>mi :action ImplementMethods<CR>
+nmap <leader>mo :action OverrideMethods<CR>
+
+" Refactoring
+nmap <leader>rb :action InvertBoolean<CR>
+nmap <leader>rc :action IntroduceConstant<CR>
+nmap <leader>rxS :action ExtractClass<CR>
+nmap <leader>rd :action SafeDelete<CR>
+nmap <leader>rf :action RenameFile<CR>
+nmap <leader>rF :action IntroduceField<CR>
+nmap <leader>rg :action Generify<CR>
+nmap <leader>ri :action Inline<CR>
+nmap <leader>rI :action ExtractInterface<CR>
+nmap <leader>rj :action MembersPullUp<CR>
+nmap <leader>rk :action MemberPushDown<CR>
+nmap <leader>rm :action Move<CR>
+nmap <leader>rM :action ExtractMethod<CR>
+nmap <leader>rn :action RenameElement<CR>
+nmap <leader>rp :action IntroduceParameter<CR>
+nmap <leader>rs :action ChangeSignature<CR>
+nmap <leader>rS :action ExtractSuperclass<CR>
+nmap <leader>rv :action IntroduceVariable<CR>
+
+" Refactoring - Extract"
+
+" Surround
+nmap <leader>s :action SurroundWith<CR>
+
+
+" Types"
+nmap <leader>th :action TypeHierarchy<CR>
+
+nmap <leader>x :action Run<CR>
+nmap <leader>X :action Run...<CR>
+
+" Usages"
+nmap <leader>u :action FindUsages<CR>
+nmap <leader>U :action FindUsagesInFile<CR>
+
+" Window
+nmap <leader>wh :action Split Down<CR>
+nmap <leader>wv :action Split Right<CR>
