@@ -4,7 +4,7 @@
 [core]
 	autocrlf = input
 	editor = vim
-	pager = ~/dotfiles/git/diff-so-fancy/diff-so-fancy | less --tabs=4 -RFX
+    pager = delta
 	whitespace = trailing-space,space-before-tab
 [alias]
 	br = branch
@@ -21,5 +21,11 @@
 	unstage = rm --cached
 [color]
 	ui = true
-[pager]
-	diff = ~/dotfiles/git/diff-so-fancy/diff-so-fancy | less --tabs=4 -RFX --pattern '^(Date|added|deleted|modified): '
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true
+[merge]
+    conflictstyle = diff3
+[diff]
+    colorMoved = default
