@@ -1,6 +1,6 @@
 [user]
 	name = Alex Landovskis
-	email = alex@landovskis.com
+	email = 61091411+alandovskis@users.noreply.github.com
 [core]
 	autocrlf = input
 	editor = vim
@@ -29,3 +29,5 @@
     conflictstyle = diff3
 [diff]
     colorMoved = default
+[init]
+	defaultBranch = main
