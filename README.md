@@ -46,7 +46,7 @@ config locations.
 
 ## Setup
 
-From the repo root, symlink what you want:
+From the repo root, symlink what you want (or use GNU Stow):
 
 ```sh
 ln -sf "$(pwd)/git/.gitconfig" "$HOME/.gitconfig"
@@ -59,4 +59,10 @@ ln -sf "$(pwd)/gem/.gemrc" "$HOME/.gemrc"
 ln -sf "$(pwd)/rspec/.rspec" "$HOME/.rspec"
 ln -sf "$(pwd)/jetbrains/.ideavimrc" "$HOME/.ideavimrc"
 ln -sf "$(pwd)/kdiff3/.kdiff3rc" "$HOME/.kdiff3rc"
+```
+
+GNU Stow example:
+
+```sh
+stow -t "$HOME" git zsh curl gem rspec jetbrains kdiff3
 ```
