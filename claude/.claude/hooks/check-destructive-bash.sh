@@ -28,16 +28,42 @@ set -euo pipefail
 input=$(cat)
 cmd=$(echo "$input" | jq -r '.tool_input.command // ""')
 
-deny() {
-    printf 'BLOCKED: %s\n\nCommand: %s\n' "$1" "$cmd" >&2
-    exit 2
-}
+# Strip the content of "human text" arguments — commit messages, PR bodies,
+# titles, and descriptions — before pattern-matching.  These flags always carry
+# human-readable prose, never executable code, so dangerous-sounding words
+# inside them are false positives.
+#
+# Examples of false positives that are fixed:
+#   git commit -m "blocks rm -rf on dangerous paths"   →  git commit -m ""
+#   gh pr create --body "protect against DROP TABLE"   →  gh pr create --body ""
+#
+# We intentionally do NOT strip -c/-e/--execute arguments because those
+# contain SQL or shell code that the patterns should actually inspect.
+#
+# The original $cmd is preserved for error output so the user sees exactly
+# what was blocked.
+cmd_for_matching=$(printf '%s' "$cmd" | sed \
+    -e 's/\( -m \+\)"[^"]*"/\1""/g' \
+    -e 's/\( -m \+\)'"'"'[^'"'"']*'"'"'/\1'"'"''"'"'/g' \
+    -e 's/\(--message \+\)"[^"]*"/\1""/g' \
+    -e 's/\(--message \+\)'"'"'[^'"'"']*'"'"'/\1'"'"''"'"'/g' \
+    -e 's/\(--body \+\)"[^"]*"/\1""/g' \
+    -e 's/\(--body \+\)'"'"'[^'"'"']*'"'"'/\1'"'"''"'"'/g' \
+    -e 's/\(--title \+\)"[^"]*"/\1""/g' \
+    -e 's/\(--title \+\)'"'"'[^'"'"']*'"'"'/\1'"'"''"'"'/g' \
+    -e 's/\(--description \+\)"[^"]*"/\1""/g' \
+    -e 's/\(--description \+\)'"'"'[^'"'"']*'"'"'/\1'"'"''"'"'/g')
+# For "git commit -F - <<MARKER", the heredoc body IS the commit message.
+# Keep only the first line so none of the message text is pattern-matched.
+if printf '%s' "$cmd_for_matching" | head -1 | grep -qE '^\s*git\s+commit\b.*-F\b'; then
+    cmd_for_matching=$(printf '%s' "$cmd_for_matching" | head -1)
+fi
 
 # Strip single-quoted heredoc content before pattern matching.
 # Heredoc bodies (<<'EOF' ... EOF) are text data — commit messages, PR bodies,
 # documentation — not executed shell code. Matching against them causes false
 # positives when the text describes dangerous commands.
-cmd_check=$(printf '%s\n' "$cmd" | awk '
+cmd_check=$(printf '%s\n' "$cmd_for_matching" | awk '
     /<<'"'"'[A-Za-z_]/ {
         s = $0
         sub(/.*<<'"'"'/, "", s)
@@ -64,6 +90,11 @@ if echo "$cmd_check" | grep -qE '^\s*(echo|printf|cat|grep|rg|awk|sed|head|tail|
    ! echo "$cmd_check" | grep -qE '\|\s*(bash|sh|zsh|fish|ksh|dash)\b'; then
     is_display_cmd=true
 fi
+
+deny() {
+    printf 'BLOCKED: %s\n\nCommand: %s\n' "$1" "$cmd" >&2
+    exit 2
+}
 
 # --- rm -rf on dangerous targets: /, /*, ~, $HOME, or current dir (.) ---
 # The target must be bounded (followed by whitespace or end of string) to avoid
