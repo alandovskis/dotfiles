@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "cleanupPeriodDays": 30,
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "300000",
+    "MAX_MCP_OUTPUT_TOKENS": "25000"
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "WebSearch",
+      "WebFetch",
+
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(du:*)",
+      "Bash(which:*)",
+      "Bash(echo:*)",
+      "Bash(pwd:*)",
+      "Bash(date:*)",
+      "Bash(tree:*)",
+      "Bash(jq:*)",
+      "Bash(gh:*)",
+
+      "Bash(uv:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm:*)",
+      "Bash(yarn:*)",
+      "Bash(npx:*)",
+      "Bash(cargo:*)",
+
+      "Bash(ruff:*)",
+      "Bash(pyright:*)",
+      "Bash(pytest:*)",
+      "Bash(python:*)",
+
+      "mcp__context7__*",
+      "mcp__fetch__*",
+      "mcp__git__*"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(su :*)",
+      "Bash(/usr/bin/sudo:*)",
+      "Bash(doas :*)",
+      "Bash(pkexec:*)",
+      "Bash(chmod 777:*)",
+      "Bash(chmod -R 777:*)",
+      "Bash(:|:*)",
+      "Bash(mkfs:*)",
+      "Bash(dd if:*)",
+      "Bash(> /dev:*)",
+      "Bash(eval :*)",
+      "Bash(crontab:*)",
+      "Bash(nohup:*)",
+      "Bash(nc :*)",
+      "Bash(ncat:*)",
+      "Bash(socat:*)",
+
+      "Write(/etc/*)",
+      "Write(/usr/*)",
+      "Write(/System/*)",
+      "Write(/var/*)",
+      "Write(/bin/*)",
+      "Write(/sbin/*)",
+      "Write(~/.ssh/*)",
+      "Write(*.pem)",
+      "Write(*id_rsa*)",
+      "Write(*id_ed25519*)",
+      "Write(*.key)",
+      "Write(.env.production)",
+      "Write(*credentials*)",
+      "Write(*secret*)",
+
+      "Edit(~/.ssh/*)",
+      "Edit(*.pem)",
+      "Edit(*id_rsa*)",
+      "Edit(*id_ed25519*)",
+      "Edit(.env.production)",
+      "Edit(*credentials*)",
+      "Edit(*secret*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/session-start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/session-end.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/user-prompt-secrets.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/write-guard.sh",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/bash-guard.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/bash-vuln.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/posttooluse-failure.sh",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/permission-git.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/stop.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/scripts/pre-compact.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
