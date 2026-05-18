@@ -1,205 +1,108 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "cleanupPeriodDays": 30,
-  "env": {
-    "BASH_DEFAULT_TIMEOUT_MS": "300000",
-    "MAX_MCP_OUTPUT_TOKENS": "25000"
-  },
   "permissions": {
     "allow": [
-      "Read",
-      "Grep",
-      "Glob",
-      "WebSearch",
-      "WebFetch",
-
-      "Bash(git:*)",
-      "Bash(ls:*)",
-      "Bash(head:*)",
-      "Bash(tail:*)",
-      "Bash(wc:*)",
-      "Bash(du:*)",
-      "Bash(which:*)",
-      "Bash(echo:*)",
-      "Bash(pwd:*)",
-      "Bash(date:*)",
-      "Bash(tree:*)",
-      "Bash(jq:*)",
-      "Bash(gh:*)",
-
-      "Bash(uv:*)",
-      "Bash(npm run:*)",
-      "Bash(npm test:*)",
-      "Bash(npm install:*)",
-      "Bash(pnpm:*)",
-      "Bash(yarn:*)",
-      "Bash(npx:*)",
-      "Bash(cargo:*)",
-
-      "Bash(ruff:*)",
-      "Bash(pyright:*)",
-      "Bash(pytest:*)",
-      "Bash(python:*)",
-
-      "mcp__context7__*",
-      "mcp__fetch__*",
-      "mcp__git__*"
-    ],
-    "deny": [
-      "Bash(sudo:*)",
-      "Bash(su :*)",
-      "Bash(/usr/bin/sudo:*)",
-      "Bash(doas :*)",
-      "Bash(pkexec:*)",
-      "Bash(chmod 777:*)",
-      "Bash(chmod -R 777:*)",
-      "Bash(:|:*)",
-      "Bash(mkfs:*)",
-      "Bash(dd if:*)",
-      "Bash(> /dev:*)",
-      "Bash(eval :*)",
-      "Bash(crontab:*)",
-      "Bash(nohup:*)",
-      "Bash(nc :*)",
-      "Bash(ncat:*)",
-      "Bash(socat:*)",
-
-      "Write(/etc/*)",
-      "Write(/usr/*)",
-      "Write(/System/*)",
-      "Write(/var/*)",
-      "Write(/bin/*)",
-      "Write(/sbin/*)",
-      "Write(~/.ssh/*)",
-      "Write(*.pem)",
-      "Write(*id_rsa*)",
-      "Write(*id_ed25519*)",
-      "Write(*.key)",
-      "Write(.env.production)",
-      "Write(*credentials*)",
-      "Write(*secret*)",
-
-      "Edit(~/.ssh/*)",
-      "Edit(*.pem)",
-      "Edit(*id_rsa*)",
-      "Edit(*id_ed25519*)",
-      "Edit(.env.production)",
-      "Edit(*credentials*)",
-      "Edit(*secret*)"
+      "Bash(awk *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(find *)",
+      "Bash(git blame*)",
+      "Bash(git branch*)",
+      "Bash(git cat-file*)",
+      "Bash(git describe*)",
+      "Bash(git diff*)",
+      "Bash(git grep*)",
+      "Bash(git log*)",
+      "Bash(git ls-files*)",
+      "Bash(git ls-remote*)",
+      "Bash(git remote*)",
+      "Bash(git rev-parse*)",
+      "Bash(git shortlog*)",
+      "Bash(git show*)",
+      "Bash(git stash list*)",
+      "Bash(git status*)",
+      "Bash(git tag*)",
+      "Bash(grep *)",
+      "Bash(head *)",
+      "Bash(jq *)",
+      "Bash(ls *)",
+      "Bash(printf *)",
+      "Bash(sed -n *)",
+      "Bash(sort *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "EnterPlanMode",
+      "EnterWorktree",
+      "ExitPlanMode",
+      "ExitWorktree",
+      "TaskCreate",
+      "TaskGet",
+      "TaskList",
+      "TaskOutput",
+      "TaskStop",
+      "TaskUpdate",
+      "mcp__pencil"
     ]
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/session-start.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/session-end.sh",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/user-prompt-secrets.sh",
-            "timeout": 2
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/write-guard.sh",
-            "timeout": 3
+            "command": "bash /Users/alex/.claude/hooks/check-destructive-bash.sh",
+            "timeout": 10
           }
         ]
       },
       {
-        "matcher": "Bash",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/bash-guard.sh",
-            "timeout": 3
+            "command": "bash /Users/alex/.claude/hooks/check-sensitive-write.sh",
+            "timeout": 10
           }
         ]
-      }
-    ],
-    "PostToolUse": [
+      },
       {
-        "matcher": "Bash",
+        "matcher": "Read",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/bash-vuln.sh",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "PostToolUseFailure": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/posttooluse-failure.sh",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/permission-git.sh",
-            "timeout": 2
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/stop.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/scripts/pre-compact.sh",
-            "timeout": 5
+            "command": "bash /Users/alex/.claude/hooks/check-sensitive-read.sh",
+            "timeout": 10
           }
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash /Users/alex/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "feature-dev@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "atlassian@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "kotlin-lsp@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "context7@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "railway@claude-plugins-official": true,
+    "sonarqube@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {},
+  "autoUpdatesChannel": "stable",
+  "agentPushNotifEnabled": true
 }
