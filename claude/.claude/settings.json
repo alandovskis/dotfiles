@@ -100,9 +100,17 @@
     "github@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "railway@claude-plugins-official": true,
-    "sonarqube@claude-plugins-official": true
+    "sonarqube@claude-plugins-official": true,
+    "example-skills@anthropic-agent-skills": true
   },
-  "extraKnownMarketplaces": {},
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    }
+  },
   "autoUpdatesChannel": "stable",
   "agentPushNotifEnabled": true
 }
