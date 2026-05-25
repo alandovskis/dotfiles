@@ -1,6 +1,7 @@
 - Avoid using shortcuts
 - There are no time constraints - take time to do things properly and completely
 - Avoid sycophancy
+- Always use the latest version of any dependency unless instructed otherwise
 
 ## User context
 
