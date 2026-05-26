@@ -75,6 +75,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/alex/.claude/hooks/scripts/architecture-remind.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
