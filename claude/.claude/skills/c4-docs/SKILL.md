@@ -3,9 +3,9 @@ name: c4-docs
 description: |-
   Creates and maintains C4 architecture documentation using Mermaid diagrams.
   Analyzes the codebase to generate accurate System Context, Container, and Component
-  diagrams written to ARCHITECTURE.md. When run on a project that already has
-  ARCHITECTURE.md, updates the diagrams to reflect current code state while
-  preserving any manually written sections.
+  diagrams, each stored as a separate file under docs/. Renders each diagram with
+  mcp__pencil after writing. When run on a project that already has docs, updates
+  diagrams to reflect current code state while preserving manually written text.
   Triggers: "document architecture", "create C4 docs", "update architecture diagram",
   "generate system diagram", "C4 model", "architecture documentation", "keep docs up to date".
 allowed-tools:
@@ -15,23 +15,25 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
+  - mcp__pencil
 ---
 
 # C4 Architecture Documentation Skill
 
 ## Goal
 
-Analyze the current codebase and create or update `ARCHITECTURE.md` with C4-model
-architecture diagrams using Mermaid syntax. Documentation must accurately reflect
-actual code — never invent or assume components that aren't evidenced.
+Analyze the current codebase and create or update three separate C4 diagram files
+under `docs/` using Mermaid syntax. Render each diagram with `mcp__pencil` after
+writing. Documentation must accurately reflect actual code — never invent or assume
+components that aren't evidenced.
 
-## C4 Model Overview
+## Output Files
 
-| Level | Diagram | Focus |
-|-------|---------|-------|
-| 1 | **System Context** | The system + external actors and systems |
-| 2 | **Container** | Deployable units: services, databases, queues, frontends |
-| 3 | **Component** | Internals of a single container |
+| File | C4 Level | Content |
+|------|----------|---------|
+| `docs/c4-context.md` | Level 1 | System Context diagram |
+| `docs/c4-containers.md` | Level 2 | Container diagram |
+| `docs/c4-components.md` | Level 3 | Component diagrams (one per non-trivial container) |
 
 Generate as many levels as the codebase warrants. A small CLI may only need
 Level 1–2; a microservices system likely needs all three.
@@ -42,8 +44,8 @@ Level 1–2; a microservices system likely needs all three.
 
 ### Step 1: Check for existing documentation
 
-Look for `ARCHITECTURE.md` in the project root and in `docs/`. If found, read it
-fully before proceeding — preserve manually written sections when updating.
+Look for each of the three output files. If any exist, read them fully before
+proceeding — preserve manually written text (descriptions, notes, ADRs) when updating.
 
 ### Step 2: Analyze the codebase
 
@@ -82,7 +84,7 @@ Use these signals to reverse-engineer the architecture:
 ### Step 3: Build the diagrams
 
 Use Mermaid's native C4 syntax. Every element and relationship must be backed by
-evidence found in Step 2 — note the file that evidences each one.
+evidence found in Step 2.
 
 #### C4Context — Level 1
 
@@ -142,82 +144,45 @@ C4Component
   Rel(from, to, "Label", "Technology")
 ```
 
-### Step 4: Write or update ARCHITECTURE.md
+### Step 4: Write or update each file, then render
 
-**Creating from scratch**: write the full template below.
+Process the three files in order: context → containers → components.
 
-**Updating existing file**:
-- Update each `C4Context`, `C4Container`, `C4Component` code block to reflect current state
-- Add new elements, remove elements that no longer exist
-- Keep all manually maintained sections intact (anything after `## Design Decisions`,
-  or sections marked `<!-- manually maintained -->`)
-- Update the `Last updated:` date at the top
+For **each file**:
 
-### Step 5: Report the changes
+1. **Create or update** the file using the template below
+   - Creating: write the full template
+   - Updating: replace only the Mermaid code block; preserve all surrounding text
 
-After writing the file, tell the user:
-- Which diagrams were created or updated
-- Architectural elements added or removed since last run
-- Any gaps requiring manual input (unclear external dependencies, ambiguous relationships)
+2. **Render immediately** after writing by calling `mcp__pencil` on the file,
+   so the user sees the rendered diagram before moving to the next file
 
----
+#### File template
 
-## ARCHITECTURE.md Template
+Each of the three files follows this structure:
 
 ```markdown
-# Architecture
+<!-- c4-docs: auto-generated — edit the Mermaid block only, keep other text -->
+# [Diagram Title]
 
 > Last updated: YYYY-MM-DD
 
-## Table of Contents
-
-- [System Context](#system-context)
-- [Container Diagram](#container-diagram)
-- [Component Diagrams](#component-diagrams)
-- [Design Decisions](#design-decisions)
-
----
-
-## System Context
-
-[One paragraph describing the system purpose and its environment.]
+[One paragraph describing what this diagram shows. Manually maintained — not overwritten.]
 
 ```mermaid
-C4Context
+C4Context   (or C4Container / C4Component)
   ...
 ```
 
----
-
-## Container Diagram
-
-[One paragraph describing the major deployable units and how they fit together.]
-
-```mermaid
-C4Container
-  ...
+<!-- manually maintained: add notes, decisions, or ADRs below this line -->
 ```
 
----
+### Step 5: Report the changes
 
-## Component Diagrams
-
-### [Container Name]
-
-[One paragraph describing this container's internal structure.]
-
-```mermaid
-C4Component
-  ...
-```
-
----
-
-## Design Decisions
-
-<!-- This section is manually maintained and will not be overwritten by /c4-docs. -->
-<!-- Add Architecture Decision Records (ADRs) or key design notes here. -->
-```
+After all files are written and rendered, tell the user:
+- Which files were created vs updated
+- Architectural elements added or removed since the last run
+- Any gaps needing manual input (e.g. unclear external dependencies)
 
 ---
 
@@ -225,11 +190,13 @@ C4Component
 
 - **Only document what exists** — every element and relationship must be evidenced
   by a specific file or code pattern found during analysis
+- **Render after every write** — call `mcp__pencil` immediately after each file
+  is written or edited, before moving on to the next file
 - **Appropriate depth** — skip Level 3 for containers with trivial internals
 - **Consistent naming** — use the same names as the codebase; do not rename things
-- **Preserve manual sections** — `## Design Decisions` and any section marked
+- **Preserve manual text** — text outside the Mermaid block and content after
   `<!-- manually maintained -->` must never be overwritten
 - **Accurate relationships** — only draw an arrow where there is code evidence
   of communication (import, HTTP call, DB connection, queue publish/consume)
-- **Technology labels** — fill in the "Technology" field in Container/Component
-  diagrams using the actual language, framework, or protocol found in the code
+- **Technology labels** — fill in the "Technology" field using the actual language,
+  framework, or protocol found in the code
