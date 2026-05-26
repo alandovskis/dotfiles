@@ -1,13 +1,13 @@
 ---
-name: c4-docs
+name: architecture
 description: |-
-  Creates and maintains C4 architecture documentation using Mermaid diagrams.
-  Analyzes the codebase to generate accurate System Context, Container, and Component
-  diagrams, each stored as a separate file under docs/. Renders each diagram with
-  mcp__pencil after writing. When run on a project that already has docs, updates
-  diagrams to reflect current code state while preserving manually written text.
-  Triggers: "document architecture", "create C4 docs", "update architecture diagram",
-  "generate system diagram", "C4 model", "architecture documentation", "keep docs up to date".
+  Documents and maintains the architecture of the current codebase using the C4 model
+  and Mermaid diagrams. Produces three separate files (System Context, Container,
+  Component) under docs/, rendering each with mcp__pencil after writing. Re-run at
+  any time to update diagrams to reflect the current state of the code.
+  Triggers: "document architecture", "architecture diagram", "update architecture",
+  "C4 diagram", "system context", "container diagram", "component diagram",
+  "architecture documentation", "keep architecture up to date".
 allowed-tools:
   - Read
   - Write
@@ -18,7 +18,7 @@ allowed-tools:
   - mcp__pencil
 ---
 
-# C4 Architecture Documentation Skill
+# Architecture Skill
 
 ## Goal
 
@@ -200,3 +200,9 @@ After all files are written and rendered, tell the user:
   of communication (import, HTTP call, DB connection, queue publish/consume)
 - **Technology labels** — fill in the "Technology" field using the actual language,
   framework, or protocol found in the code
+
+## Example Invocations
+
+- `/architecture` — generate or refresh all three diagram files
+- `/architecture context only` — generate only the System Context diagram
+- `/architecture update` — re-analyze codebase and update all diagrams
