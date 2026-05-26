@@ -2,12 +2,13 @@
 name: architecture
 description: |-
   Documents and maintains the architecture of the current codebase using the C4 model
-  and Mermaid diagrams. Produces three separate files (System Context, Container,
-  Component) under docs/, rendering each with mcp__pencil after writing. Re-run at
-  any time to update diagrams to reflect the current state of the code.
+  and Mermaid diagrams. Produces four separate files under docs/: System Context,
+  Container, Component diagrams, and a design patterns catalogue. Renders each diagram
+  with mcp__pencil after writing. Re-run at any time to update docs to reflect the
+  current state of the code.
   Triggers: "document architecture", "architecture diagram", "update architecture",
   "C4 diagram", "system context", "container diagram", "component diagram",
-  "architecture documentation", "keep architecture up to date".
+  "design patterns", "architecture documentation", "keep architecture up to date".
 allowed-tools:
   - Read
   - Write
@@ -15,28 +16,29 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - mcp__pencil
 ---
 
 # Architecture Skill
 
 ## Goal
 
-Analyze the current codebase and create or update three separate C4 diagram files
-under `docs/` using Mermaid syntax. Render each diagram with `mcp__pencil` after
-writing. Documentation must accurately reflect actual code — never invent or assume
-components that aren't evidenced.
+Analyze the current codebase and create or update four separate files under `docs/`
+using Mermaid syntax. Render each diagram with `mmdc` after writing. Documentation
+must accurately reflect actual code — never invent or assume components or patterns
+that aren't evidenced.
 
 ## Output Files
 
-| File | C4 Level | Content |
-|------|----------|---------|
-| `docs/c4-context.md` | Level 1 | System Context diagram |
-| `docs/c4-containers.md` | Level 2 | Container diagram |
-| `docs/c4-components.md` | Level 3 | Component diagrams (one per non-trivial container) |
+| File | Content |
+|------|---------|
+| `docs/c4-context.md` | Level 1 – System Context diagram |
+| `docs/c4-containers.md` | Level 2 – Container diagram |
+| `docs/c4-components.md` | Level 3 – Component diagrams (one per non-trivial container) |
+| `docs/architecture-patterns.md` | Design patterns catalogue with evidence |
 
-Generate as many levels as the codebase warrants. A small CLI may only need
-Level 1–2; a microservices system likely needs all three.
+Generate as many C4 levels as the codebase warrants. A small CLI may only need
+Level 1–2; a microservices system likely needs all three. The patterns file is
+always produced regardless of depth.
 
 ---
 
@@ -44,7 +46,7 @@ Level 1–2; a microservices system likely needs all three.
 
 ### Step 1: Check for existing documentation
 
-Look for each of the three output files. If any exist, read them fully before
+Look for each of the four output files. If any exist, read them fully before
 proceeding — preserve manually written text (descriptions, notes, ADRs) when updating.
 
 ### Step 2: Analyze the codebase
@@ -80,6 +82,30 @@ Use these signals to reverse-engineer the architecture:
 - gRPC: `*.proto` files
 - GraphQL: `*.graphql`, `schema.graphql`, `typeDefs`
 - WebSocket handlers
+
+**Design patterns** — search source files for these indicators:
+
+| Pattern | Category | Code signals |
+|---------|----------|--------------|
+| Repository | Structural | `*Repository`, `*Repo`, `*Store`, `Find*`/`Save*`/`Delete*` on domain types |
+| Factory | Creational | `*Factory`, `Create*`, `New*`, `Make*` functions/classes |
+| Singleton | Creational | `getInstance()`, `sync.Once`, module-level global instance |
+| Builder | Creational | Fluent `With*()`/`Set*()` chains ending in `Build()`/`Create()` |
+| Observer / Event | Behavioral | `EventEmitter`, `on('…', handler)`, pub/sub, event bus, `@EventHandler` |
+| Strategy | Behavioral | Interface with multiple swappable implementations, injected behavior |
+| Middleware / Decorator | Structural | `app.use()`, handler wrappers, HOCs, `@Decorator` annotations |
+| Command / CQRS | Behavioral | `*Command`, `*Query`, `*Handler`, `Execute()`, separate read/write models |
+| Facade | Structural | Single entry-point class/module hiding a complex subsystem |
+| Adapter | Structural | `*Adapter`, `*Wrapper`, bridge between incompatible interfaces |
+| Template Method | Behavioral | Abstract base class with `override`-able steps |
+| State Machine | Behavioral | Explicit state enums + transition tables or state objects |
+| Layered / N-Tier | Architectural | `controllers/` → `services/` → `repositories/` directory hierarchy |
+| Hexagonal | Architectural | `domain/`, `ports/`, `adapters/` separation |
+| Event Sourcing | Architectural | Append-only event log, `*Event`, replay/projection logic |
+| MVC / MVP / MVVM | Architectural | Framework conventions: Rails, Spring MVC, Angular, ASP.NET |
+
+For each pattern found: record the name, a one-sentence description of how it is
+used in *this* codebase, and at least one file reference as evidence.
 
 ### Step 3: Build the diagrams
 
@@ -146,23 +172,32 @@ C4Component
 
 ### Step 4: Write or update each file, then render
 
-Process the three files in order: context → containers → components.
+Process files in order: context → containers → components → patterns.
 
-For **each file**:
+For **each C4 diagram file** (`c4-context.md`, `c4-containers.md`, `c4-components.md`):
 
-1. **Create or update** the file using the template below
+1. **Create or update** using the diagram file template below
    - Creating: write the full template
    - Updating: replace only the Mermaid code block; preserve all surrounding text
 
-2. **Render immediately** after writing by calling `mcp__pencil` on the file,
-   so the user sees the rendered diagram before moving to the next file
+2. **Render immediately** after writing:
+   ```
+   mmdc -i docs/<file>.md -o docs/<file>.png
+   ```
+   Show the rendered image to the user before moving to the next file.
 
-#### File template
+For **`docs/architecture-patterns.md`**:
 
-Each of the three files follows this structure:
+1. **Create or update** using the patterns file template below
+   - Creating: write the full template with all patterns found
+   - Updating: add new patterns, remove patterns no longer present, update evidence
+
+2. No rendering needed — it contains no Mermaid diagrams.
+
+#### Diagram file template
 
 ```markdown
-<!-- c4-docs: auto-generated — edit the Mermaid block only, keep other text -->
+<!-- architecture: auto-generated — edit the Mermaid block only, keep other text -->
 # [Diagram Title]
 
 > Last updated: YYYY-MM-DD
@@ -177,21 +212,42 @@ C4Context   (or C4Container / C4Component)
 <!-- manually maintained: add notes, decisions, or ADRs below this line -->
 ```
 
+#### Patterns file template
+
+```markdown
+<!-- architecture: auto-generated -->
+# Design Patterns
+
+> Last updated: YYYY-MM-DD
+
+Patterns identified in the codebase, with evidence.
+
+| Pattern | Category | Usage in this codebase | Evidence |
+|---------|----------|------------------------|----------|
+| Repository | Structural | Abstracts database access for each domain entity | `src/repositories/UserRepository.ts:1` |
+| Factory | Creational | ... | `...` |
+
+<!-- manually maintained: extended notes below this line -->
+```
+
 ### Step 5: Report the changes
 
 After all files are written and rendered, tell the user:
 - Which files were created vs updated
 - Architectural elements added or removed since the last run
-- Any gaps needing manual input (e.g. unclear external dependencies)
+- Patterns added, removed, or updated
+- Any gaps needing manual input (e.g. unclear external dependencies, unrecognised patterns)
 
 ---
 
 ## Rules
 
-- **Only document what exists** — every element and relationship must be evidenced
-  by a specific file or code pattern found during analysis
-- **Render after every write** — call `mcp__pencil` immediately after each file
-  is written or edited, before moving on to the next file
+- **Only document what exists** — every element, relationship, and pattern must be
+  evidenced by a specific file or code signal found during analysis
+- **List every identified pattern** — `architecture-patterns.md` must enumerate all
+  patterns found, with a usage description and at least one file:line reference each
+- **Render after every C4 file write** — run `mmdc` immediately after each diagram
+  file is written or edited, before moving on to the next file
 - **Appropriate depth** — skip Level 3 for containers with trivial internals
 - **Consistent naming** — use the same names as the codebase; do not rename things
 - **Preserve manual text** — text outside the Mermaid block and content after
@@ -203,6 +259,7 @@ After all files are written and rendered, tell the user:
 
 ## Example Invocations
 
-- `/architecture` — generate or refresh all three diagram files
+- `/architecture` — generate or refresh all four files (diagrams + patterns)
 - `/architecture context only` — generate only the System Context diagram
-- `/architecture update` — re-analyze codebase and update all diagrams
+- `/architecture update` — re-analyze codebase and update all files
+- `/architecture patterns` — refresh only the design patterns catalogue
