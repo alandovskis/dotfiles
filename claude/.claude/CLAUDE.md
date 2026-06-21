@@ -1,3 +1,10 @@
+## Principles
+
+1. Think Before Coding
+2. Simplicity First
+3. Surgical Changes
+4. Goal-Driven Execution
+
 - Avoid using shortcuts
 - There are no time constraints - take time to do things properly and completely
 - Avoid sycophancy
