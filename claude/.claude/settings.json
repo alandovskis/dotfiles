@@ -21,6 +21,22 @@
       "Bash(git stash list*)",
       "Bash(git status*)",
       "Bash(git tag*)",
+      "Bash(git -C * blame*)",
+      "Bash(git -C * branch*)",
+      "Bash(git -C * cat-file*)",
+      "Bash(git -C * describe*)",
+      "Bash(git -C * diff*)",
+      "Bash(git -C * grep*)",
+      "Bash(git -C * log*)",
+      "Bash(git -C * ls-files*)",
+      "Bash(git -C * ls-remote*)",
+      "Bash(git -C * remote*)",
+      "Bash(git -C * rev-parse*)",
+      "Bash(git -C * shortlog*)",
+      "Bash(git -C * show*)",
+      "Bash(git -C * stash list*)",
+      "Bash(git -C * status*)",
+      "Bash(git -C * tag*)",
       "Bash(grep *)",
       "Bash(head *)",
       "Bash(jq *)",
@@ -43,6 +59,7 @@
       "mcp__pencil"
     ]
   },
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -103,7 +120,6 @@
     "atlassian@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
     "kotlin-lsp@claude-plugins-official": false,
-    "superpowers@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "plugin-dev@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
@@ -113,7 +129,8 @@
     "commit-commands@claude-plugins-official": true,
     "railway@claude-plugins-official": true,
     "sonarqube@claude-plugins-official": true,
-    "example-skills@anthropic-agent-skills": true
+    "example-skills@anthropic-agent-skills": true,
+    "ecc@ecc": false
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -121,8 +138,13 @@
         "source": "github",
         "repo": "anthropics/skills"
       }
+    },
+    "ecc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/ECC.git"
+      }
     }
   },
-  "autoUpdatesChannel": "stable",
   "agentPushNotifEnabled": true
 }
