@@ -110,16 +110,26 @@
           {
             "type": "agent",
             "prompt": "Tool context: $ARGUMENTS\n\nIf the Bash command above does NOT contain 'git commit', stop immediately and output nothing.\n\nOtherwise: run `git show --name-only --format='' HEAD` to list the files changed in the commit. Review test coverage for those files — identify missing unit tests, uncovered edge cases, and integration test gaps. Report findings concisely.",
-            "model": "sonnet",
             "timeout": 120,
+            "model": "sonnet",
             "statusMessage": "Post-commit: reviewing test coverage..."
           },
           {
             "type": "agent",
             "prompt": "Tool context: $ARGUMENTS\n\nIf the Bash command above does NOT contain 'git commit', stop immediately and output nothing.\n\nOtherwise: run `git show --name-only --format='' HEAD` to list the files changed in the commit. Review those files for refactoring opportunities — long functions, duplicated logic, unclear naming, deep nesting, poor abstractions. Suggest specific actionable improvements without changing behavior.",
-            "model": "sonnet",
             "timeout": 120,
+            "model": "sonnet",
             "statusMessage": "Post-commit: analyzing refactoring opportunities..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/Users/alex/.claude/hooks/context-mode-cache-heal.mjs\""
           }
         ]
       }
@@ -147,9 +157,10 @@
     "github@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "railway@claude-plugins-official": true,
-    "sonarqube@claude-plugins-official": true,
     "example-skills@anthropic-agent-skills": true,
-    "ecc@ecc": false
+    "ecc@ecc": false,
+    "context-mode@context-mode": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "anthropic-agent-skills": {
@@ -162,6 +173,18 @@
       "source": {
         "source": "git",
         "url": "https://github.com/affaan-m/ECC.git"
+      }
+    },
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
       }
     }
   },
