@@ -167,10 +167,39 @@ Wait for the fork to return its findings.
 
 Apply all findings from the reviewer to produce a revised PRD. Output only the final revised document — do not show the review notes or a diff.
 
-## Step 5: Offer to save
+## Step 5: Offer to save or publish
 
-After outputting the revised document, offer to save it as a `.md` file in the current directory with a slugified filename (e.g. `prd-feature-name.md`).
+After outputting the revised document, use AskUserQuestion to ask:
+1. Would you like to save this as a `.md` file locally? (provide a suggested slugified filename, e.g. `prd-feature-name.md`)
+2. Would you like to publish this to Confluence? If yes, what space and parent page should it live under?
+
+If the user wants a local file, write it to the current directory with the agreed filename.
+
+If the user wants to publish to Confluence, proceed to **Step 5a**.
+
+### Step 5a: Publish to Confluence
+
+1. **Resolve the cloud ID** — call `getAccessibleAtlassianResources` to get the user's Confluence cloud ID.
+
+2. **Resolve the space** — call `getConfluenceSpaces` with the cloud ID. If the user gave a space key, filter by it. If ambiguous, present the matching spaces and ask the user to confirm.
+
+3. **Resolve the parent page** — if the user specified a parent page title or path, call `searchConfluenceUsingCql` with a CQL query like:
+   `type = page AND space = "SPACEKEY" AND title = "Parent Page Title"`
+   Use the returned page ID as `parentId`. If the user did not specify a parent page, create the page at the space root (omit `parentId`).
+
+4. **Convert the PRD to HTML** — render the Markdown PRD as clean HTML suitable for Confluence (headings, paragraphs, `<table>` for tables, `<ul>`/`<ol>` for lists). Do not wrap in `<html>`, `<head>`, or `<body>` tags.
+
+5. **Create the page** — call `createConfluencePage` with:
+   - `cloudId` — resolved above
+   - `spaceId` — resolved above
+   - `parentId` — resolved above (if applicable)
+   - `title` — the PRD feature name
+   - `body` — the HTML content
+   - `contentFormat` — `"html"`
+   - `status` — `"current"` (published) or `"draft"` based on the document status field in the PRD
+
+6. **Confirm** — report the URL of the created page to the user.
 
 ## Step 6: User iteration loop
 
-After presenting the revised PRD, ask the user: "Would you like any changes?" If yes, apply their feedback, then repeat Steps 3–4 (fork reviewer + revise) before presenting the updated version. Continue until the user is satisfied.
+After presenting the revised PRD, ask the user: "Would you like any changes?" If yes, apply their feedback, then repeat Steps 3–4 (fork reviewer + revise) before presenting the updated version. If the document was already published to Confluence, offer to update it via `updateConfluencePage` after each accepted revision. Continue until the user is satisfied.
