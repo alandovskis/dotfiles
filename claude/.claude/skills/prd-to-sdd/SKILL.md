@@ -11,24 +11,23 @@ description: |-
 
 You are generating a Software Design Document (SDD) from a Confluence PRD. For each requirement, run an internal generator-reviewer loop to produce a high-quality design section, then publish the assembled SDD back to Confluence. Follow the steps below precisely.
 
-## Step 1: Gather inputs
+## Step 1: Resolve cloud ID and choose source PRD
 
-If the user has not already provided both of the following, use AskUserQuestion to ask:
+**1a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-1. **PRD source** — Confluence page URL or page ID
-2. **SDD destination** — Confluence space key and parent page title or URL (e.g. space: `ENG`, parent: `Design Documents/2024`)
+**1b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter — omitting it returns all spaces including collaboration spaces. Present every returned space to the user via AskUserQuestion and ask them to choose the space that contains the PRD.
 
-## Step 2: Resolve cloud ID
+**1c. Choose the PRD page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. Present every returned page title to the user via AskUserQuestion and ask them to choose the PRD. If the space has more pages than fit in one response, paginate until all pages are listed before presenting.
 
-Call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
+**1d. Fetch the PRD** — use the selected page's `id` as `pageId`. Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
 
-## Step 3: Fetch the PRD
+## Step 2: Choose SDD destination
 
-Extract the page ID from the URL:
-- Tiny link: `/wiki/x/<ID>` — use `<ID>` directly
-- Long format: `/wiki/spaces/<SPACE>/pages/<ID>/...` — use the numeric `<ID>`
+**2a. Choose the destination space** — ask the user via AskUserQuestion whether to publish the SDD to the same space or a different one. If the same space, re-use the space `id` already resolved. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list for the user to choose from.
 
-Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
+**2b. Choose the parent page** — call `getPagesInConfluenceSpace` with `cloudId` and the destination space `id`. Present every returned page title via AskUserQuestion and ask the user to choose the parent page under which the SDD will be created. If they want it at the space root, include that as an explicit option.
+
+Store the destination `spaceId` and `parentId` for use in Step 7.
 
 ## Step 4: Extract requirements
 
@@ -49,7 +48,7 @@ If the document has no identifiable requirements, tell the user and stop.
 
 ## Step 5: Generator-reviewer loop — one section per requirement
 
-For **each requirement**, run these three passes internally before writing the final section:
+For **each requirement**, run the following passes before writing the final section:
 
 ### Pass 1 — Generator
 
@@ -75,32 +74,44 @@ Section structure:
 
 **Open Questions** — any unresolved design decisions with owner and target date. Omit if none.
 
-### Pass 2 — Reviewer
+### Pass 2 — Subagent Reviewer
 
-Review the draft as a critical senior engineer. Check:
+Spawn a subagent using the Agent tool with the following prompt (substitute the actual requirement text and draft section):
 
-**Must pass** (block on any failure):
-- Requirement is fully addressed — trace every clause of the requirement text
-- No empty sections (only "N/A — reason" is acceptable)
-- No internal contradictions
-- No unowned TBDs
+> You are a critical senior software engineer reviewing a draft SDD section. Your only job is to find gaps — do not rewrite the section yourself.
+>
+> **Requirement:**
+> [requirement ID, title, and full description]
+>
+> **Draft SDD section:**
+> [full draft text]
+>
+> Review against these criteria:
+>
+> **Must pass** (flag any failure):
+> - Requirement is fully addressed — trace every clause of the requirement text
+> - No empty sections (only "N/A — reason" is acceptable)
+> - No internal contradictions
+> - No unowned TBDs
+>
+> **Should pass** (flag if 2 or more fail):
+> - At least one alternative considered and rejected with a concrete reason
+> - Error table covers all five required conditions (400, 403, 404, 409, 503)
+> - Schema changes include constraints and migration strategy
+> - Security checklist covered (auth, validation, PII)
+> - Test scenarios cover happy path, at least one error path, and one edge case
+>
+> Respond with exactly one of:
+> - `APPROVED`
+> - `REVISE:\n1. [section] — [specific gap and what to add]\n2. ...`
 
-**Should pass** (revise if 2 or more fail):
-- At least one alternative considered and rejected with a concrete reason
-- Error table covers all five required conditions
-- Schema changes include constraints and migration strategy
-- Security checklist covered (auth, validation, PII)
-- Test scenarios cover happy path, at least one error path, and one edge case
-
-Output either:
-- `APPROVED` — accept the section
-- `REVISE:\n1. [section] — [specific gap and what to add]\n2. ...`
+Wait for the subagent to return its verdict before proceeding.
 
 ### Pass 3 — Revision
 
-If REVISE: apply every cited gap. Re-run the reviewer once.
+If the subagent returned REVISE: apply every cited gap, then spawn a fresh reviewer subagent with the revised draft using the same prompt above.
 
-After the second revision, if still REVISE: accept the section with a `⚠️ Needs Human Review: [outstanding issues]` prefix. Maximum 2 revision rounds per requirement — never loop further.
+After the second review, if still REVISE: accept the section with a `⚠️ Needs Human Review: [outstanding issues]` prefix. Maximum 2 revision rounds per requirement — never loop further.
 
 ---
 
@@ -140,17 +151,16 @@ Combine all sections into one document:
 
 ## Step 7: Publish to Confluence
 
-Resolve the parent page: call `search` or `getConfluencePage` to find the parent page ID from the space key and path the user provided.
+Use the `spaceId` and `parentId` resolved in Step 2.
 
 Call `createConfluencePage` with:
 - `cloudId`
-- `spaceKey` — user-provided space
+- `spaceId` — numeric ID resolved in Step 2
+- `parentId` — resolved in Step 2 (omit if user chose space root)
 - `title` — `"SDD: [PRD title]"`
-- `parentId` — resolved parent page ID
-- `content` — assembled SDD
-- `contentFormat` — `"wiki"`
-
-Convert markdown to Confluence wiki markup for headings (`h2.`), tables, and links (`[text|url]`).
+- `body` — assembled SDD as HTML (headings, tables, lists — no `<html>`/`<head>`/`<body>` wrapper)
+- `contentFormat` — `"html"`
+- `status` — `"draft"`
 
 If a page with that title already exists, call `updateConfluencePage` instead, or ask the user if they want a new page with a date suffix: `SDD: [PRD title] (YYYY-MM-DD)`.
 
