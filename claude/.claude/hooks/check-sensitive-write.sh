@@ -15,6 +15,8 @@
 #   - Vault token (~/.vault-token)
 #   - Terraform credentials (~/.terraform.d/credentials.tfrc.json)
 #   - Named credentials/secrets files (credentials.json, secrets.yaml, etc.)
+#   - Claude Code skill definitions (~/.claude/skills/**)
+#   - Claude Code global settings (~/.claude/settings.json)
 #
 # Applies to: Write, Edit, MultiEdit tools
 
@@ -101,6 +103,17 @@ fi
 # such a file, ask Claude to explain what it is writing first.
 if echo "$file_path" | grep -iqE '/(credentials?|secrets?|api[-_]?keys?)\.(json|yaml|yml|toml|ini|env)$'; then
     deny "this file name suggests it contains credentials or secrets. If intentional, write to a differently-named file and rename it manually."
+fi
+
+# Claude Code skill definitions — self-modification without explicit user authorization
+# can silently change agent behaviour across all future sessions.
+if echo "$file_path" | grep -qE "^$HOME/\.claude/skills/"; then
+    deny "this is a Claude Code skill definition (~/.claude/skills/). Modifying skill files can silently change agent behaviour in all future sessions. Edit skill files manually outside of Claude."
+fi
+
+# Claude Code global settings — changes affect permissions and hooks for every session.
+if echo "$file_path" | grep -qE "^$HOME/\.claude/settings\.json$"; then
+    deny "this is the Claude Code global settings file (~/.claude/settings.json). Changes affect permissions and hooks for every session. Edit it manually outside of Claude."
 fi
 
 exit 0
