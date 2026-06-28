@@ -15,6 +15,8 @@ Implement production code from a Confluence Software Design Document (SDD) test-
 
 > **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If you cannot fully implement a component because the SDD is ambiguous or a dependency is missing, stop, surface the blocker explicitly, and ask the user before continuing. A partial implementation that compiles is worse than a clear gap report.
 
+> **Don't do — xfail markers.** Never mark tests with `@pytest.mark.xfail`, `test.failing`, `xit`, `xtest`, or any other expected-failure decorator or mechanism. Tests in Loop A must fail outright (not xfail) because they exercise production code that does not yet exist; tests in Loop B must pass. Masking failures with xfail hides real gaps and defeats the test gate.
+
 ## Step 0: Register a Stop hook
 
 Before doing anything else, add a `Stop` hook to `.claude/settings.local.json` so the E2E test suite runs automatically each time you end a turn. This ensures no turn completes with a broken test suite.
