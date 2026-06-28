@@ -12,24 +12,27 @@ description: |-
 
 You are generating a System Test Plan from a Confluence PRD. For each requirement, run an internal generator-reviewer loop to produce thorough, specific test cases, then publish the assembled plan back to Confluence. Follow the steps below precisely.
 
-## Step 1: Gather inputs
+## Step 1: Resolve cloud ID and choose source PRD
 
-If the user has not already provided both of the following, use AskUserQuestion to ask:
+**1a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-1. **PRD source** — Confluence page URL or page ID
-2. **Test plan destination** — Confluence space key and parent page title or URL (e.g. space: `ENG`, parent: `Test Plans/2024`)
+**1b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter — omitting it returns all spaces including collaboration spaces. Present every returned space to the user via AskUserQuestion and ask them to choose the space that contains the PRD.
 
-## Step 2: Resolve cloud ID
+**1c. Choose the PRD page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. Present every returned page title to the user via AskUserQuestion and ask them to choose the PRD. If the space has more pages than fit in one response, paginate until all pages are listed before presenting.
 
-Call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
+**1d. Fetch the PRD** — use the selected page's `id` as `pageId`. Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
+
+## Step 2: Choose test plan destination
+
+**2a. Choose the destination space** — ask the user via AskUserQuestion whether to publish the test plan to the same space or a different one. If the same space, re-use the space `id` already resolved. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list for the user to choose from.
+
+**2b. Choose the parent page** — call `getPagesInConfluenceSpace` with `cloudId` and the destination space `id`. Present every returned page title via AskUserQuestion and ask the user to choose the parent page under which the test plan will be created. If they want it at the space root, include that as an explicit option.
+
+Store the destination `spaceId` and `parentId` for use in Step 7.
 
 ## Step 3: Fetch the PRD
 
-Extract the page ID from the URL:
-- Tiny link: `/wiki/x/<ID>` — use `<ID>` directly
-- Long format: `/wiki/spaces/<SPACE>/pages/<ID>/...` — use the numeric `<ID>`
-
-Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
+Already completed in Step 1d. Proceed to Step 4.
 
 ## Step 4: Extract requirements
 
@@ -241,20 +244,12 @@ Assembled document structure:
 
 ## Step 7: Publish to Confluence
 
-### Resolve the space ID
-
-Call `getConfluenceSpaces` with `cloudId` and `keys: [user-provided space key]`. Use the returned `id` field as `spaceId`. (`createConfluencePage` requires a numeric space ID, not the space key string.)
-
-### Resolve the parent page ID
-
-Call `search` with the parent page title, or call `getConfluencePage` if the user provided a URL, to obtain the numeric parent page ID.
-
-### Create the page
+Use the `spaceId` and `parentId` resolved in Step 2.
 
 Call `createConfluencePage` with:
 - `cloudId`
-- `spaceId` — numeric ID from `getConfluenceSpaces`
-- `parentId` — numeric ID of the parent page
+- `spaceId` — numeric ID resolved in Step 2
+- `parentId` — resolved in Step 2 (omit if user chose space root)
 - `title` — `"Test Plan: [PRD title]"`
 - `body` — assembled test plan as HTML
 - `contentFormat` — `"html"`
