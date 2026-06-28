@@ -15,6 +15,35 @@ Implement production code from a Confluence Software Design Document (SDD) test-
 
 > **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If you cannot fully implement a component because the SDD is ambiguous or a dependency is missing, stop, surface the blocker explicitly, and ask the user before continuing. A partial implementation that compiles is worse than a clear gap report.
 
+## Step 0: Register a Stop hook
+
+Before doing anything else, add a `Stop` hook to `.claude/settings.local.json` so the E2E test suite runs automatically each time you end a turn. This ensures no turn completes with a broken test suite.
+
+Read `.claude/settings.local.json` first, then merge this into the `hooks.Stop` array (preserve any existing hooks):
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd apps/web && python3 -m pytest tests/e2e/ -q --tb=no 2>&1 | tail -5",
+            "timeout": 120,
+            "statusMessage": "Running E2E tests…"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+If `.claude/settings.local.json` does not exist, create it with only the above content.
+
+Remove this hook entry in Step 6 after the summary report is complete.
+
 ## Step 1: Gather inputs
 
 If the user has not already provided the following, use AskUserQuestion to ask:
@@ -244,6 +273,8 @@ Log: `"System tests: [P] passing / [F] failing"`.
 ---
 
 ## Step 6: Summary report
+
+Remove the Stop hook added in Step 0 from `.claude/settings.local.json` (leave all other hooks intact). If the file becomes empty, delete it.
 
 Present a concise implementation report:
 
