@@ -159,7 +159,6 @@
     "railway@claude-plugins-official": true,
     "example-skills@anthropic-agent-skills": true,
     "ecc@ecc": false,
-    "context-mode@context-mode": true,
     "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
@@ -188,5 +187,6 @@
       }
     }
   },
+  "skipWorkflowUsageWarning": true,
   "agentPushNotifEnabled": true
 }

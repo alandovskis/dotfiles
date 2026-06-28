@@ -13,6 +13,8 @@ description: |-
 
 Implement production code from a Confluence Software Design Document (SDD) test-first. Start by launching **two parallel planner-generator-reviewer loops**: Loop A implements the test plan as executable code; Loop B implements the SDD, gated by unit tests and integration tests. Follow these steps precisely.
 
+> **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If you cannot fully implement a component because the SDD is ambiguous or a dependency is missing, stop, surface the blocker explicitly, and ask the user before continuing. A partial implementation that compiles is worse than a clear gap report.
+
 ## Step 1: Gather inputs
 
 If the user has not already provided the following, use AskUserQuestion to ask:
@@ -183,7 +185,7 @@ Spawn a fresh subagent via the Agent tool with this prompt:
 >
 > **Must pass** (flag any failure):
 > - Every SDD-specified field, endpoint, method, or behaviour is present
-> - No unimplemented stubs or TODOs remain
+> - No stubs remain: scan every production file for `pass`, `TODO`, `FIXME`, `raise NotImplementedError`, `return 501`, empty function bodies, and placeholder strings like `"not implemented"` — flag each occurrence with file and line number
 > - Error handling matches SDD error table (correct HTTP status codes and error codes)
 > - Security rules from SDD enforced (auth checks, input validation, PII handling)
 > - Unit tests cover every function's happy path and all SDD-listed error conditions
