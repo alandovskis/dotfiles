@@ -45,7 +45,7 @@ This choice gates which parts of Steps 3, 5, 6, and 7 run below.
 ## Step 4: Extract requirements
 
 Parse the PRD content for individual requirements. They may appear as:
-- A `## Requirements` table (columns: ID, title, description)
+- A `## Requirements` table (columns may include ID, title, description, user story, UI Component, notes)
 - A numbered or bulleted list of requirement statements
 - Sections with requirement headings
 
@@ -53,9 +53,15 @@ For each requirement, record:
 - **ID** — existing identifier or auto-generated (REQ-001, REQ-002…)
 - **Title** — short label
 - **Description** — full requirement text, including any acceptance criteria and notes
+- **UI Component** — `Yes` if the requirement row or text indicates a user-facing screen, form, dashboard, report view, navigation, notification, visual workflow, or other interactive/visual interface; otherwise `No`
+
+Also extract any design-system context from the PRD, including:
+- Links or notes in the Quick Links `Designs` entry
+- Any `## Design` section content
+- Named design system, component library, style guide, accessibility rules, platform conventions, or brand constraints
 
 Present the list to the user and confirm before generating:
-> "I found [N] requirements: [list]. Shall I generate the [SDD / test plan / SDD and test plan]?"
+> "I found [N] requirements: [list with UI Component: Yes/No]. Shall I generate the [SDD / test plan / SDD and test plan]?"
 
 If the document has no identifiable requirements, tell the user and stop.
 
@@ -71,11 +77,15 @@ For **each requirement**, run the loop(s) below for each artifact type chosen in
 
 Draft the SDD section. Write from the perspective of an experienced software architect. Use concrete language — no "could", "might", or "should consider". Every sub-section below must be populated; write "N/A — [reason]" if it genuinely does not apply.
 
+If the requirement has `UI Component: Yes`, include a UI mockup that follows the extracted design-system context. The mockup must be concrete enough for engineering and design review: show layout, visible states, primary controls, empty/loading/error states where relevant, and the design-system components/tokens being used. Use Mermaid, ASCII wireframe, Markdown table, or concise HTML/CSS-style pseudomarkup that can survive Confluence publishing. If the PRD does not name a design system, state the assumed design-system baseline before the mockup and use common accessible product UI conventions.
+
 Section structure:
 
 **Requirement Summary** — verbatim or paraphrased requirement text.
 
 **Design Approach** — 2–4 paragraphs: chosen design and why, key architectural patterns, integration points with existing systems. Include an "Alternatives considered" table (approach vs. reason rejected).
+
+**UI Mockup** — for `UI Component: Yes`, include a requirement-specific mockup following the design system; for `UI Component: No`, write "N/A — no user-facing UI component."
 
 **Data Model Changes** — new tables/collections/fields with schema (column types, constraints, indexes, migration strategy). If none: "N/A — no schema changes required."
 
@@ -98,7 +108,10 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > You are a critical senior software engineer reviewing a draft SDD section. Your only job is to find gaps — do not rewrite the section yourself.
 >
 > **Requirement:**
-> [requirement ID, title, and full description]
+> [requirement ID, title, full description, and UI Component: Yes/No]
+>
+> **Design-system context:**
+> [design links, design section notes, component library, style guide, accessibility rules, platform conventions, or "not specified"]
 >
 > **Draft SDD section:**
 > [full draft text]
@@ -110,6 +123,8 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > - No empty sections (only "N/A — reason" is acceptable)
 > - No internal contradictions
 > - No unowned TBDs
+> - If UI Component is Yes, the section includes a **UI Mockup** that follows the design-system context and shows layout, primary controls, and relevant states
+> - If UI Component is No, the **UI Mockup** section explicitly says "N/A — no user-facing UI component."
 >
 > **Should pass** (flag if 2 or more fail):
 > - At least one alternative considered and rejected with a concrete reason
@@ -117,6 +132,7 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > - Schema changes include constraints and migration strategy
 > - Security checklist covered (auth, validation, PII)
 > - Test scenarios cover happy path, at least one error path, and one edge case
+> - UI mockups identify the design-system components or tokens used, or clearly state the design-system assumption when none is specified
 >
 > Respond with exactly one of:
 > - `APPROVED`
