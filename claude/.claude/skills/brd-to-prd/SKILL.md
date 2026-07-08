@@ -40,10 +40,15 @@ Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown
 ## Step 4: Extract business requirements and propose scoping
 
 Parse the BRD content for:
-- **Business Requirements** — table rows or list items (ID, title, description, priority, category)
+- **Business Requirements** — table rows or list items (ID, title, description, priority, category, UI component)
 - **Business Rules** — rules that constrain or govern the requirements
 - **Constraints** — budget, timeline, regulatory, technology
 - **Business Objectives** — the outcomes the business wants to achieve
+
+For each business requirement, determine whether it has a UI component:
+- Mark **Yes** when satisfying the requirement requires a user-facing screen, form, dashboard, report view, navigation, notification, visual workflow, or other interactive/visual interface.
+- Mark **No** when the requirement is purely backend, integration, data processing, operational, policy, compliance, or infrastructure work with no user-facing surface.
+- If the BRD is ambiguous, infer the most likely value from the requirement wording and add the uncertainty to the Notes field in the generated PRD requirement row.
 
 Then propose a PRD scoping plan. Apply these rules:
 
@@ -58,8 +63,8 @@ Then propose a PRD scoping plan. Apply these rules:
 Present the scoping plan to the user:
 
 > "Based on the BRD I found [N] business requirements. I propose [M] PRDs:
-> - **PRD 1: [title]** — covers BR-001, BR-002 ([one-sentence rationale])
-> - **PRD 2: [title]** — covers BR-003 ([one-sentence rationale])
+> - **PRD 1: [title]** — covers BR-001 (UI: Yes), BR-002 (UI: No) ([one-sentence rationale])
+> - **PRD 2: [title]** — covers BR-003 (UI: Yes) ([one-sentence rationale])
 > - …
 >
 > Shall I proceed, or would you like to adjust the scoping?"
@@ -82,7 +87,7 @@ Spawn a fresh subagent with this prompt (substitute the bracketed values):
 > Constraints: [constraints from the BRD, verbatim]
 >
 > **Business requirements to cover in this PRD**
-> [For each BR being covered: ID, title, full description, priority, business rules that apply]
+> [For each BR being covered: ID, title, full description, priority, UI component: Yes/No, business rules that apply]
 >
 > **PRD title**
 > [proposed PRD title]
@@ -94,9 +99,11 @@ Spawn a fresh subagent with this prompt (substitute the bracketed values):
 > - User stories follow: *As a [persona], I want [action] so that [benefit].* The persona must be a real user type, not "the system".
 > - Success metrics must have concrete numbers and timeframes derived from the BRD's business objectives.
 > - Importance values: Must / Should / Could / Won't — derived from the source BR priority.
+> - UI Component values: Yes / No — derived from whether the source BR requires a user-facing screen, form, dashboard, report view, navigation, notification, visual workflow, or other interactive/visual interface.
 > - The Objective section describes user and business outcomes, not implementation.
 > - Out of Scope must explicitly exclude anything from the BRD that this PRD does not cover, plus any adjacent capability that readers might assume is included.
 > - Every requirement in the table must be independently testable.
+> - Every requirement in the table must preserve the source BR's UI Component value. If the value is inferred from ambiguous wording, explain that uncertainty in Notes.
 >
 > ```markdown
 > # [PRD title]
@@ -156,9 +163,9 @@ Spawn a fresh subagent with this prompt (substitute the bracketed values):
 >
 > ## Requirements
 >
-> | Requirement | User Story | Importance | Jira Issue | Notes |
-> |-------------|------------|------------|------------|-------|
-> | … | As a [persona], I want [action] so that [benefit]. | … | — | … |
+> | Requirement | User Story | Importance | UI Component | Jira Issue | Notes |
+> |-------------|------------|------------|--------------|------------|-------|
+> | … | As a [persona], I want [action] so that [benefit]. | … | Yes/No | — | … |
 >
 > ---
 >
@@ -196,7 +203,7 @@ Spawn a fresh subagent with this prompt. Pass only the BRD context and `draft` �
 > You are a senior product manager doing an adversarial review of a PRD draft. Your only job is to find weaknesses — do not rewrite the PRD.
 >
 > **Source BRD requirements covered by this PRD:**
-> [For each BR: ID, title, full description, priority]
+> [For each BR: ID, title, full description, priority, UI component: Yes/No]
 >
 > **Draft PRD:**
 > [draft]
@@ -206,6 +213,8 @@ Spawn a fresh subagent with this prompt. Pass only the BRD context and `draft` �
 > - No requirement row describes HOW to build something — each must describe WHAT the user needs.
 > - Every user story follows: *As a [persona], I want [action] so that [benefit].* The persona must be a named user type, not "the system" or "the platform".
 > - Every requirement is independently testable — no row depends on another row to be meaningful.
+> - Every requirement row includes a UI Component value of `Yes` or `No`.
+> - Every requirement row's UI Component value matches the source BR classification.
 > - Out of Scope explicitly lists at least one adjacent capability that readers might assume is included.
 >
 > **Should pass** (flag if 2 or more fail with REVISE):
@@ -281,10 +290,10 @@ After all pages are created, report:
 
 After publishing, verify that every BR from the BRD is covered by at least one published PRD. Report:
 
-| BR ID | Title | Covered by PRD |
-|-------|-------|----------------|
-| BR-001 | … | [PRD title] |
-| BR-002 | … | [PRD title] |
+| BR ID | Title | UI Component | Covered by PRD |
+|-------|-------|--------------|----------------|
+| BR-001 | … | Yes/No | [PRD title] |
+| BR-002 | … | Yes/No | [PRD title] |
 
 If any BR is uncovered, flag it:
 > "⚠️ The following BRD requirements are not covered by any PRD: [BR-IDs]. Would you like to create an additional PRD for these, or note them as out of scope?"
