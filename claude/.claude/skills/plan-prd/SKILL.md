@@ -1,16 +1,19 @@
 ---
-name: prd-to-test-plan
+name: plan-prd
 description: |-
-  Reads a PRD from a Confluence page and generates a System Test Plan using a
-  generator-reviewer loop: one test-case group per requirement. Publishes the
-  assembled test plan to Confluence under a user-specified space and parent page.
-  Trigger when user says: "generate a test plan from a Confluence PRD",
+  Reads a PRD from a Confluence page and generates a Software Design Document
+  and/or a System Test Plan, using a generator-reviewer loop per requirement
+  for each. Publishes the assembled document(s) to Confluence under a
+  user-specified space and parent page.
+  Trigger when user says: "generate an SDD from a Confluence PRD", "convert PRD
+  to SDD", "create a software design document from requirements", "write a design
+  doc from a Confluence page", "generate a test plan from a Confluence PRD",
   "create a system test plan from requirements", "convert PRD to test plan",
-  "write a test plan from a Confluence page", "/prd-to-test-plan", or asks to
-  turn a PRD into a test plan or QA plan.
+  "write a test plan from a Confluence page", "/plan-prd", "/prd-to-sdd",
+  "/prd-to-test-plan", or asks to turn a PRD into a design doc, a test plan, or both.
 ---
 
-You are generating a System Test Plan from a Confluence PRD. For each requirement, run an internal generator-reviewer loop to produce thorough, specific test cases, then publish the assembled plan back to Confluence. Follow the steps below precisely.
+You are turning a Confluence PRD into a Software Design Document (SDD), a System Test Plan, or both. For each requirement, run an internal generator-reviewer loop per selected artifact to produce a high-quality section, then publish the assembled document(s) back to Confluence. Follow the steps below precisely.
 
 ## Step 1: Resolve cloud ID and choose source PRD
 
@@ -22,35 +25,118 @@ You are generating a System Test Plan from a Confluence PRD. For each requiremen
 
 **1d. Fetch the PRD** — use the selected page's `id` as `pageId`. Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
 
-## Step 2: Choose test plan destination
+## Step 2: Choose what to generate
 
-**2a. Choose the destination space** — ask the user via AskUserQuestion whether to publish the test plan to the same space or a different one. If the same space, re-use the space `id` already resolved. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list for the user to choose from.
+Ask the user via AskUserQuestion which artifact(s) to generate:
+- **Software Design Document**
+- **System Test Plan**
+- **Both**
 
-**2b. Choose the parent page** — call `getPagesInConfluenceSpace` with `cloudId` and the destination space `id`. Present every returned page title via AskUserQuestion and ask the user to choose the parent page under which the test plan will be created. If they want it at the space root, include that as an explicit option.
+This choice gates which parts of Steps 3, 5, 6, and 7 run below.
 
-Store the destination `spaceId` and `parentId` for use in Step 7.
+## Step 3: Choose destination(s)
 
-## Step 3: Fetch the PRD
+**3a. Single artifact selected** — ask the user via AskUserQuestion whether to publish to the same space as the PRD or a different one. If the same space, re-use the space `id` already resolved. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list. Then call `getPagesInConfluenceSpace` with the destination space `id` and present every returned page title via AskUserQuestion so the user can choose the parent page (include "space root" as an explicit option). Store the resolved `spaceId` and `parentId`.
 
-Already completed in Step 1d. Proceed to Step 4.
+**3b. Both artifacts selected** — ask the user via AskUserQuestion whether the SDD and Test Plan should publish to the same space/parent page or to different ones.
+- **Same** — resolve one destination as in 3a and store it as `spaceId`/`parentId`, used for both documents.
+- **Different** — resolve a destination as in 3a for the SDD (`sddSpaceId`/`sddParentId`), then resolve a second destination the same way for the Test Plan (`tpSpaceId`/`tpParentId`).
 
 ## Step 4: Extract requirements
 
-Parse the PRD content for individual requirements (table, numbered list, or section headings). For each requirement, record:
+Parse the PRD content for individual requirements. They may appear as:
+- A `## Requirements` table (columns: ID, title, description)
+- A numbered or bulleted list of requirement statements
+- Sections with requirement headings
+
+For each requirement, record:
 - **ID** — existing identifier or auto-generated (REQ-001, REQ-002…)
 - **Title** — short label
-- **Description** — full requirement text including any acceptance criteria and notes
+- **Description** — full requirement text, including any acceptance criteria and notes
 
 Present the list to the user and confirm before generating:
-> "I found [N] requirements: [list]. Shall I generate the test plan?"
+> "I found [N] requirements: [list]. Shall I generate the [SDD / test plan / SDD and test plan]?"
 
 If the document has no identifiable requirements, tell the user and stop.
 
-## Step 5: Generator-reviewer loop — one group per requirement
+## Step 5: Generator-reviewer loops
 
-For **each requirement**, launch three independent subagents using the Agent tool. Each agent is started fresh (not a fork) so the reviewer has no memory of the generation reasoning — giving genuinely independent feedback.
+For **each requirement**, run the loop(s) below for each artifact type chosen in Step 2. The two loops are independent of each other — run whichever apply, in either order.
 
-### Agent 1 — Generator
+### Step 5A: SDD loop — one section per requirement
+
+*Run only if the SDD (or Both) was selected in Step 2.*
+
+#### Pass 1 — Generator
+
+Draft the SDD section. Write from the perspective of an experienced software architect. Use concrete language — no "could", "might", or "should consider". Every sub-section below must be populated; write "N/A — [reason]" if it genuinely does not apply.
+
+Section structure:
+
+**Requirement Summary** — verbatim or paraphrased requirement text.
+
+**Design Approach** — 2–4 paragraphs: chosen design and why, key architectural patterns, integration points with existing systems. Include an "Alternatives considered" table (approach vs. reason rejected).
+
+**Data Model Changes** — new tables/collections/fields with schema (column types, constraints, indexes, migration strategy). If none: "N/A — no schema changes required."
+
+**API / Interface Changes** — new or modified endpoints (method, path, auth, request/response shapes) and internal interfaces. If none: "N/A."
+
+**Error Handling** — table: Condition | HTTP Status | Error Code | User-Facing Message. Must include at minimum: invalid input (400), not found (404), unauthorized (403), conflict (409), downstream failure (503).
+
+**Security** — authentication requirement, authorization rules, input validation approach, PII handling.
+
+**Testing** — at least 3 unit test scenarios and 2 integration test scenarios (state what is asserted, not just "write tests").
+
+**Dependencies** — upstream (what this feature requires), downstream (what consumes it), blocking (other REQ IDs that must land first).
+
+**Open Questions** — any unresolved design decisions with owner and target date. Omit if none.
+
+#### Pass 2 — Subagent Reviewer
+
+Spawn a subagent using the Agent tool with the following prompt (substitute the actual requirement text and draft section):
+
+> You are a critical senior software engineer reviewing a draft SDD section. Your only job is to find gaps — do not rewrite the section yourself.
+>
+> **Requirement:**
+> [requirement ID, title, and full description]
+>
+> **Draft SDD section:**
+> [full draft text]
+>
+> Review against these criteria:
+>
+> **Must pass** (flag any failure):
+> - Requirement is fully addressed — trace every clause of the requirement text
+> - No empty sections (only "N/A — reason" is acceptable)
+> - No internal contradictions
+> - No unowned TBDs
+>
+> **Should pass** (flag if 2 or more fail):
+> - At least one alternative considered and rejected with a concrete reason
+> - Error table covers all five required conditions (400, 403, 404, 409, 503)
+> - Schema changes include constraints and migration strategy
+> - Security checklist covered (auth, validation, PII)
+> - Test scenarios cover happy path, at least one error path, and one edge case
+>
+> Respond with exactly one of:
+> - `APPROVED`
+> - `REVISE:\n1. [section] — [specific gap and what to add]\n2. ...`
+
+Wait for the subagent to return its verdict before proceeding.
+
+#### Pass 3 — Revision
+
+If the subagent returned REVISE: apply every cited gap, then spawn a fresh reviewer subagent with the revised draft using the same prompt above.
+
+After the second review, if still REVISE: accept the section with a `⚠️ Needs Human Review: [outstanding issues]` prefix. Maximum 2 revision rounds per requirement — never loop further.
+
+### Step 5B: Test Plan loop — one group per requirement
+
+*Run only if the System Test Plan (or Both) was selected in Step 2.*
+
+Launch three independent subagents using the Agent tool. Each agent is started fresh (not a fork) so the reviewer has no memory of the generation reasoning — giving genuinely independent feedback.
+
+#### Agent 1 — Generator
 
 Launch a fresh agent with this prompt, substituting the bracketed values:
 
@@ -86,7 +172,7 @@ Launch a fresh agent with this prompt, substituting the bracketed values:
 
 Store the agent's output as `draft`.
 
-### Agent 2 — Reviewer
+#### Agent 2 — Reviewer
 
 Launch a fresh agent with this prompt. Pass only the requirement and `draft` — do not include any generation reasoning or prior context:
 
@@ -120,7 +206,7 @@ Launch a fresh agent with this prompt. Pass only the requirement and `draft` —
 
 Store the agent's output as `review`.
 
-### Agent 3 — Revision (only if `review` starts with `REVISE`)
+#### Agent 3 — Revision (only if `review` starts with `REVISE`)
 
 Launch a fresh agent with this prompt:
 
@@ -147,9 +233,49 @@ Store the output as `revised_draft`. Then re-run Agent 2 (reviewer) against `rev
 
 ---
 
-## Step 6: Assemble the test plan
+## Step 6: Assemble the document(s)
 
-After generating all test cases across all requirements, reorganize them by test type. Each test case belongs to exactly one top-level section based on its **Type** field:
+### Step 6A: Assemble the SDD
+
+*Run only if the SDD was generated in Step 5A.*
+
+Combine all sections into one document:
+
+```
+# Software Design Document: [PRD title]
+
+**Source PRD**: [Confluence link]
+**Status**: Draft
+**Date**: [today]
+
+## Overview
+[2–3 sentences summarising what this document covers]
+
+## Scope
+- **In scope**: [features/systems addressed]
+- **Out of scope**: [explicitly excluded]
+
+## Requirements Coverage
+| Req ID | Title | Status |
+|--------|-------|--------|
+| REQ-001 | ... | ✅ |
+| REQ-002 | ... | ⚠️ Needs Human Review |
+
+---
+[REQ-001 section]
+---
+[REQ-002 section]
+...
+
+## Open Questions
+[Consolidated list of all ⚠️ flagged items and unresolved design decisions]
+```
+
+### Step 6B: Assemble the Test Plan
+
+*Run only if the Test Plan was generated in Step 5B.*
+
+Reorganize the generated test cases by test type. Each test case belongs to exactly one top-level section based on its **Type** field:
 
 | Type field value | Section |
 |-----------------|---------|
@@ -244,29 +370,39 @@ Assembled document structure:
 
 ## Step 7: Publish to Confluence
 
-Use the `spaceId` and `parentId` resolved in Step 2.
+Convert each assembled document to HTML. Use `<h2>`, `<h3>` for headings, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` for tables, `<pre><code class="language-...">` for code blocks, `<ul>`/`<ol>`/`<li>` for lists, `<strong>` for bold. Do not wrap content in `<html>`, `<head>`, or `<body>` tags.
 
-Call `createConfluencePage` with:
+**7a. Publish the SDD** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `sddSpaceId`/`sddParentId` if separate destinations were chosen). Call `createConfluencePage` with:
 - `cloudId`
-- `spaceId` — numeric ID resolved in Step 2
-- `parentId` — resolved in Step 2 (omit if user chose space root)
+- `spaceId`, `parentId` (omit `parentId` if the user chose space root)
+- `title` — `"SDD: [PRD title]"`
+- `body` — assembled SDD as HTML
+- `contentFormat` — `"html"`
+- `status` — `"draft"`
+
+If a page with that title already exists, call `updateConfluencePage` instead, or ask the user if they want a new page with a date suffix: `SDD: [PRD title] (YYYY-MM-DD)`.
+
+**7b. Publish the Test Plan** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `tpSpaceId`/`tpParentId` if separate destinations were chosen). Call `createConfluencePage` with:
+- `cloudId`
+- `spaceId`, `parentId` (omit `parentId` if the user chose space root)
 - `title` — `"Test Plan: [PRD title]"`
 - `body` — assembled test plan as HTML
 - `contentFormat` — `"html"`
 
-Convert the assembled document to HTML. Use `<h2>`, `<h3>` for headings, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` for tables, `<pre><code class="language-...">` for code blocks, `<ul>`/`<ol>`/`<li>` for lists, `<strong>` for bold. Do not wrap content in `<html>`, `<head>`, or `<body>` tags.
-
 If a page with that title already exists, call `updateConfluencePage` instead, or ask the user whether they want a date-suffixed title: `Test Plan: [PRD title] (YYYY-MM-DD)`.
 
-On success:
+On success, report every page published:
+> "✅ SDD published: [Confluence page URL]"
 > "✅ Test plan published: [Confluence page URL]"
 
 ## Edge cases
 
-**No explicit requirements section**: infer requirements from feature descriptions or user stories; confirm grouping with user before proceeding.
+**No explicit requirements section**: infer requirements from feature descriptions or user stories; group related items and confirm the grouping with the user before proceeding.
+
+**Vague requirement (SDD)**: generate the section with best effort, flag `⚠️ Insufficient detail — design decisions deferred`.
+
+**Vague requirement with no acceptance criteria (Test Plan)**: generate test cases based on reasonable interpretation, flag each with `⚠️ Acceptance criteria not defined — test cases based on interpretation`, and list the assumptions made.
 
 **Requirement has no observable system behavior** (e.g., a pure internal implementation requirement): generate test cases that verify the external effects of the internal behavior (e.g., performance, correctness of output, absence of side effects).
 
 **Large PRD (10+ requirements)**: process in batches of 5 and report progress — "Processing requirements 1–5 of 14…"
-
-**Vague requirement with no acceptance criteria**: generate test cases based on reasonable interpretation, flag each with `⚠️ Acceptance criteria not defined — test cases based on interpretation`, and list the assumptions made.
