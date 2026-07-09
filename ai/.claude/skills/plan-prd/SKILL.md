@@ -79,13 +79,19 @@ Draft the SDD section. Write from the perspective of an experienced software arc
 
 If the requirement has `UI Component: Yes`, include a UI mockup that follows the extracted design-system context. The mockup must be concrete enough for engineering and design review: show layout, visible states, primary controls, empty/loading/error states where relevant, and the design-system components/tokens being used. Use Mermaid, ASCII wireframe, Markdown table, or concise HTML/CSS-style pseudomarkup that can survive Confluence publishing. If the PRD does not name a design system, state the assumed design-system baseline before the mockup and use common accessible product UI conventions.
 
+Include Mermaid diagrams where they clarify the design. Use them for architecture flows, sequence diagrams, state machines, entity relationships, data pipelines, deployment topology, or decision workflows when prose or tables alone would be harder to review. Do not force a diagram for trivial requirements. Mermaid diagrams must be fenced code blocks with `mermaid` as the language and must have a short lead-in sentence explaining what the diagram shows.
+
 Section structure:
 
 **Requirement Summary** — verbatim or paraphrased requirement text.
 
 **Design Approach** — 2–4 paragraphs: chosen design and why, key architectural patterns, integration points with existing systems. Include an "Alternatives considered" table (approach vs. reason rejected).
 
+**Diagrams** — include one or more Mermaid diagrams when useful; otherwise write "N/A — diagram would not clarify this requirement."
+
 **UI Mockup** — for `UI Component: Yes`, include a requirement-specific mockup following the design system; for `UI Component: No`, write "N/A — no user-facing UI component."
+
+**Data / Workflow Diagrams** — include Mermaid ER, flowchart, sequence, or state diagrams when the requirement introduces non-trivial data relationships, asynchronous processing, lifecycle states, integration flow, or approval/review workflow. If a diagram is already included under **Diagrams** and covers this, write "Covered above." If not useful, write "N/A — no non-trivial data or workflow diagram needed."
 
 **Data Model Changes** — new tables/collections/fields with schema (column types, constraints, indexes, migration strategy). If none: "N/A — no schema changes required."
 
@@ -123,11 +129,13 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > - No empty sections (only "N/A — reason" is acceptable)
 > - No internal contradictions
 > - No unowned TBDs
+> - Mermaid diagrams are included where they would clarify non-trivial architecture, data relationships, lifecycle/state transitions, async flows, or review workflows; omitted diagrams have an explicit "N/A — diagram would not clarify..." reason
 > - If UI Component is Yes, the section includes a **UI Mockup** that follows the design-system context and shows layout, primary controls, and relevant states
 > - If UI Component is No, the **UI Mockup** section explicitly says "N/A — no user-facing UI component."
 >
 > **Should pass** (flag if 2 or more fail):
 > - At least one alternative considered and rejected with a concrete reason
+> - Mermaid diagrams use fenced `mermaid` code blocks and are valid enough for Confluence readers to understand without external explanation
 > - Error table covers all five required conditions (400, 403, 404, 409, 503)
 > - Schema changes include constraints and migration strategy
 > - Security checklist covered (auth, validation, PII)
@@ -271,6 +279,9 @@ Combine all sections into one document:
 - **In scope**: [features/systems addressed]
 - **Out of scope**: [explicitly excluded]
 
+## Architecture Diagrams
+[Mermaid diagrams for overall system context, container/component flow, data pipeline, ER model, sequence flow, state machine, or deployment topology where helpful. Omit this section only if diagrams would not clarify the document.]
+
 ## Requirements Coverage
 | Req ID | Title | Status |
 |--------|-------|--------|
@@ -386,7 +397,7 @@ Assembled document structure:
 
 ## Step 7: Publish to Confluence
 
-Convert each assembled document to HTML. Use `<h2>`, `<h3>` for headings, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` for tables, `<pre><code class="language-...">` for code blocks, `<ul>`/`<ol>`/`<li>` for lists, `<strong>` for bold. Do not wrap content in `<html>`, `<head>`, or `<body>` tags.
+Convert each assembled document to HTML. Use `<h2>`, `<h3>` for headings, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` for tables, `<pre><code class="language-...">` for code blocks, `<ul>`/`<ol>`/`<li>` for lists, `<strong>` for bold. Preserve Mermaid diagrams as `<pre><code class="language-mermaid">...</code></pre>` blocks so Confluence keeps the source text even when it does not render Mermaid natively. Do not wrap content in `<html>`, `<head>`, or `<body>` tags.
 
 **7a. Publish the SDD** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `sddSpaceId`/`sddParentId` if separate destinations were chosen). Call `createConfluencePage` with:
 - `cloudId`
