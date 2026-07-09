@@ -12,6 +12,7 @@ Personal dotfiles and small utility scripts for shell and development tools.
 - `kdiff3/.kdiff3rc` - KDiff3 UI and merge preferences.
 - `ai/.claude/` - Claude Code config, including commands, hooks, skills, and settings.
 - `ai/.codex/config.toml` - Codex config, including MCP servers for Atlassian, Playwright, and Pencil.
+- `ai/.codex/skills` - symlink to `ai/.claude/skills` so Claude and Codex share custom skills.
 - `rspec/.rspec` - colorized RSpec output.
 - `zsh/` - zsh environment setup, login config, and aliases.
 
@@ -64,6 +65,7 @@ ln -sf "$(pwd)/kdiff3/.kdiff3rc" "$HOME/.kdiff3rc"
 ln -sfn "$(pwd)/ai/.claude" "$HOME/.claude"
 mkdir -p "$HOME/.codex"
 ln -sf "$(pwd)/ai/.codex/config.toml" "$HOME/.codex/config.toml"
+ln -sfn "$(pwd)/ai/.claude/skills" "$HOME/.codex/skills"
 ```
 
 GNU Stow example:
