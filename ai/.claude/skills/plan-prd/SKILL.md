@@ -79,7 +79,7 @@ For **each requirement**, run all three loops below. The loops are independent o
 
 Draft the SDD section. Write from the perspective of an experienced software architect. Use concrete language — no "could", "might", or "should consider". Every sub-section below must be populated; write "N/A — [reason]" if it genuinely does not apply.
 
-If the requirement has `UI Component: Yes`, include a UI mockup that follows the extracted design-system context. The mockup must be concrete enough for engineering and design review: show layout, visible states, primary controls, empty/loading/error states where relevant, and the design-system components/tokens being used. Use Mermaid, ASCII wireframe, Markdown table, or concise HTML/CSS-style pseudomarkup that can survive Confluence publishing. If the PRD does not name a design system, state the assumed design-system baseline before the mockup and use common accessible product UI conventions.
+If the requirement has `UI Component: Yes`, include a high-fidelity UI mockup that follows the extracted design-system context. The mockup must read like a buildable screen or flow: show the page or component shell, header/body/footer structure, exact control labels, visible content, realistic example data, primary and secondary actions, empty/loading/error/disabled states, and the design-system components/tokens being used. Use Mermaid, ASCII wireframe, Markdown table, or concise HTML/CSS-style pseudomarkup that can survive Confluence publishing. If the PRD does not name a design system, state the assumed design-system baseline before the mockup and use common accessible product UI conventions. Include responsive notes when the UI changes materially on mobile.
 
 Include Mermaid diagrams where they clarify the design. Use them for architecture flows, sequence diagrams, state machines, entity relationships, data pipelines, deployment topology, or decision workflows when prose or tables alone would be harder to review. Do not force a diagram for trivial requirements. Mermaid diagrams must be fenced code blocks with `mermaid` as the language and must have a short lead-in sentence explaining what the diagram shows.
 
@@ -91,7 +91,7 @@ Section structure:
 
 **Diagrams** — include one or more Mermaid diagrams when useful; otherwise write "N/A — diagram would not clarify this requirement."
 
-**UI Mockup** — for `UI Component: Yes`, include a requirement-specific mockup following the design system; for `UI Component: No`, write "N/A — no user-facing UI component."
+**UI Mockup** — for `UI Component: Yes`, include a requirement-specific, high-fidelity mockup with exact labels, example content, and state variations; for `UI Component: No`, write "N/A — no user-facing UI component."
 
 **Data / Workflow Diagrams** — include Mermaid ER, flowchart, sequence, or state diagrams when the requirement introduces non-trivial data relationships, asynchronous processing, lifecycle states, integration flow, or approval/review workflow. If a diagram is already included under **Diagrams** and covers this, write "Covered above." If not useful, write "N/A — no non-trivial data or workflow diagram needed."
 
@@ -132,7 +132,7 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > - No internal contradictions
 > - No unowned TBDs
 > - Mermaid diagrams are included where they would clarify non-trivial architecture, data relationships, lifecycle/state transitions, async flows, or review workflows; omitted diagrams have an explicit "N/A — diagram would not clarify..." reason
-> - If UI Component is Yes, the section includes a **UI Mockup** that follows the design-system context and shows layout, primary controls, and relevant states
+> - If UI Component is Yes, the section includes a **UI Mockup** that follows the design-system context and shows a high-fidelity screen or flow with exact labels, example content, primary controls, and relevant states
 > - If UI Component is No, the **UI Mockup** section explicitly says "N/A — no user-facing UI component."
 >
 > **Should pass** (flag if 2 or more fail):
@@ -142,7 +142,7 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > - Schema changes include constraints and migration strategy
 > - Security checklist covered (auth, validation, PII)
 > - Test scenarios cover happy path, at least one error path, and one edge case
-> - UI mockups identify the design-system components or tokens used, or clearly state the design-system assumption when none is specified
+> - UI mockups identify the design-system components or tokens used, clearly state the design-system assumption when none is specified, and include responsive/state details when applicable
 >
 > Respond with exactly one of:
 > - `APPROVED`
