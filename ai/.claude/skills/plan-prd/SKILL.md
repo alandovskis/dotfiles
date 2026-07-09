@@ -1,20 +1,11 @@
 ---
 name: plan-prd
 description: |-
-  Reads a PRD from a Confluence page and always generates all three planning
-  artifacts: a Software Design Document, System Test Plan, and autonomous
-  Implementation Plan with task breakdown. Uses a generator-reviewer loop per
-  requirement for each artifact and publishes the assembled documents to
-  Confluence under a user-specified space and parent page.
-  Trigger when user says: "generate an SDD from a Confluence PRD", "convert PRD
-  to SDD", "create a software design document from requirements", "write a design
-  doc from a Confluence page", "generate a test plan from a Confluence PRD",
-  "create a system test plan from requirements", "convert PRD to test plan",
-  "write a test plan from a Confluence page", "create an implementation plan
-  from a PRD", "break a PRD into implementation tasks", "/plan-prd",
-  "/prd-to-sdd", "/prd-to-test-plan", or asks to turn a PRD into a design doc,
-  a test plan, an implementation plan, implementation tasks, or planning
-  artifacts. Always generate all three even if the user names only one.
+  Reads a PRD from Confluence and always generates all three planning artifacts:
+  a Software Design Document, System Test Plan, and autonomous Implementation
+  Plan with task breakdown plus a separate test-plan implementation breakdown.
+  Uses a generator-reviewer loop per requirement and publishes the assembled
+  documents to Confluence under the chosen space and parent page.
 ---
 
 You are turning a Confluence PRD into three artifacts every time: a Software Design Document (SDD), a System Test Plan, and an autonomous Implementation Plan. For each requirement, run an internal generator-reviewer loop for every artifact to produce high-quality sections, then publish the assembled documents back to Confluence. Follow the steps below precisely.
@@ -280,6 +271,8 @@ Each requirement task group must include:
 
 **Task Breakdown** — table with columns: Task ID | Task | Type | Target Files / Modules | Owner Role | Dependencies | Estimate | Acceptance Criteria | Validation. Task IDs must be stable and requirement-scoped, e.g. `IMP-REQ-001-01`. Types must be one of: Discovery, Backend, Frontend, Data, Infrastructure, Testing, Security, Documentation, Release. Discovery tasks must produce repo-local artifacts or decisions and cannot require user input.
 
+**Test Plan Implementation Breakdown** — a separate table that maps the requirement's generated test plan cases to the implementation work needed to support them. Include columns: Test Case ID | Test Objective | Supporting Code / Fixture / Harness Work | Implementation Task IDs | Validation. This table must explicitly cover all generated happy path, boundary, negative, error, and performance cases for the requirement when such cases exist.
+
 **Execution Order** — numbered list of task IDs in dependency order, grouped into milestones when useful.
 
 **Parallelizable Work** — list task IDs that can run in parallel and note what shared interfaces or contracts must be agreed first.
@@ -513,6 +506,9 @@ Combine all task groups into one document:
 ---
 [REQ-002 implementation task group]
 ...
+
+## Test Plan Implementation Breakdown
+[For each requirement, include a table that maps generated test case IDs to the implementation work required to make the test executable and meaningful, including fixtures, test harness changes, synthetic data, automation scripts, and any required code hooks. Keep this section separate from the task groups so it can be reviewed independently.]
 
 ## Release Plan
 [Feature flags, migrations, backfills, rollout sequence, monitoring, rollback, and documentation]
