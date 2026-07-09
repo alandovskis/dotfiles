@@ -1,10 +1,11 @@
 ---
 name: plan-prd
 description: |-
-  Reads a PRD from a Confluence page and generates a Software Design Document,
-  System Test Plan, and/or Implementation Plan with task breakdown, using a
-  generator-reviewer loop per requirement for each. Publishes the assembled
-  document(s) to Confluence under a user-specified space and parent page.
+  Reads a PRD from a Confluence page and always generates all three planning
+  artifacts: a Software Design Document, System Test Plan, and autonomous
+  Implementation Plan with task breakdown. Uses a generator-reviewer loop per
+  requirement for each artifact and publishes the assembled documents to
+  Confluence under a user-specified space and parent page.
   Trigger when user says: "generate an SDD from a Confluence PRD", "convert PRD
   to SDD", "create a software design document from requirements", "write a design
   doc from a Confluence page", "generate a test plan from a Confluence PRD",
@@ -12,10 +13,11 @@ description: |-
   "write a test plan from a Confluence page", "create an implementation plan
   from a PRD", "break a PRD into implementation tasks", "/plan-prd",
   "/prd-to-sdd", "/prd-to-test-plan", or asks to turn a PRD into a design doc,
-  a test plan, an implementation plan, or any combination of those artifacts.
+  a test plan, an implementation plan, implementation tasks, or planning
+  artifacts. Always generate all three even if the user names only one.
 ---
 
-You are turning a Confluence PRD into a Software Design Document (SDD), System Test Plan, Implementation Plan, or any combination of those artifacts. For each requirement, run an internal generator-reviewer loop per selected artifact to produce a high-quality section, then publish the assembled document(s) back to Confluence. Follow the steps below precisely.
+You are turning a Confluence PRD into three artifacts every time: a Software Design Document (SDD), a System Test Plan, and an autonomous Implementation Plan. For each requirement, run an internal generator-reviewer loop for every artifact to produce high-quality sections, then publish the assembled documents back to Confluence. Follow the steps below precisely.
 
 ## Step 1: Resolve cloud ID and choose source PRD
 
@@ -27,23 +29,20 @@ You are turning a Confluence PRD into a Software Design Document (SDD), System T
 
 **1d. Fetch the PRD** — use the selected page's `id` as `pageId`. Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
 
-## Step 2: Choose what to generate
+## Step 2: Generate all artifacts
 
-Ask the user via AskUserQuestion which artifact(s) to generate:
+Do not ask which artifact(s) to generate. Always generate all three:
 - **Software Design Document**
 - **System Test Plan**
 - **Implementation Plan**
-- **Any combination of the above**
-
-This choice gates which parts of Steps 3, 5, 6, and 7 run below.
 
 ## Step 3: Choose destination(s)
 
-**3a. Single artifact selected** — ask the user via AskUserQuestion whether to publish to the same space as the PRD or a different one. If the same space, re-use the space `id` already resolved. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list. Then call `getPagesInConfluenceSpace` with the destination space `id` and present every returned page title via AskUserQuestion so the user can choose the parent page (include "space root" as an explicit option). Store the resolved `spaceId` and `parentId`.
+Ask the user via AskUserQuestion whether all generated artifacts should publish to the same space/parent page or to different ones.
+- **Same** — resolve one destination using the destination-resolution procedure below and store it as `spaceId`/`parentId`, used for every generated document.
+- **Different** — resolve a destination using the destination-resolution procedure below for each artifact, storing `sddSpaceId`/`sddParentId`, `tpSpaceId`/`tpParentId`, and `implSpaceId`/`implParentId`.
 
-**3b. Multiple artifacts selected** — ask the user via AskUserQuestion whether all generated artifacts should publish to the same space/parent page or to different ones.
-- **Same** — resolve one destination as in 3a and store it as `spaceId`/`parentId`, used for every generated document.
-- **Different** — resolve a destination as in 3a for each selected artifact, storing `sddSpaceId`/`sddParentId`, `tpSpaceId`/`tpParentId`, and/or `implSpaceId`/`implParentId` as applicable.
+Destination-resolution procedure: ask whether to publish to the same space as the PRD or a different one. If the same space, re-use the PRD space `id`. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list. Then call `getPagesInConfluenceSpace` with the destination space `id` and present every returned page title via AskUserQuestion so the user can choose the parent page (include "space root" as an explicit option). Store the resolved destination space and parent IDs using the variable names required by the selected same/different destination mode.
 
 ## Step 4: Extract requirements
 
@@ -64,17 +63,17 @@ Also extract any design-system context from the PRD, including:
 - Named design system, component library, style guide, accessibility rules, platform conventions, or brand constraints
 
 Present the list to the user and confirm before generating:
-> "I found [N] requirements: [list with UI Component: Yes/No]. Shall I generate the [SDD / test plan / implementation plan / selected artifacts]?"
+> "I found [N] requirements: [list with UI Component: Yes/No]. Shall I generate the SDD, system test plan, and autonomous implementation plan?"
 
 If the document has no identifiable requirements, tell the user and stop.
 
 ## Step 5: Generator-reviewer loops
 
-For **each requirement**, run the loop(s) below for each artifact type chosen in Step 2. The loops are independent of each other — run whichever apply, in either order.
+For **each requirement**, run all three loops below. The loops are independent of each other — run them in any order.
 
 ### Step 5A: SDD loop — one section per requirement
 
-*Run only if the SDD was selected in Step 2.*
+*Always run.*
 
 #### Pass 1 — Generator
 
@@ -159,7 +158,7 @@ After the second review, if still REVISE: accept the section with a `⚠️ Need
 
 ### Step 5B: Test Plan loop — one group per requirement
 
-*Run only if the System Test Plan was selected in Step 2.*
+*Always run.*
 
 Launch three independent subagents using the Agent tool. Each agent is started fresh (not a fork) so the reviewer has no memory of the generation reasoning — giving genuinely independent feedback.
 
@@ -260,7 +259,7 @@ Store the output as `revised_draft`. Then re-run Agent 2 (reviewer) against `rev
 
 ### Step 5C: Implementation Plan loop — one task group per requirement
 
-*Run only if the Implementation Plan was selected in Step 2.*
+*Always run.*
 
 #### Pass 1 — Generator
 
@@ -341,7 +340,7 @@ After the second review, if still REVISE: accept the task group with a `⚠️ N
 
 ### Step 6A: Assemble the SDD
 
-*Run only if the SDD was generated in Step 5A.*
+*Always run.*
 
 Combine all sections into one document:
 
@@ -380,7 +379,7 @@ Combine all sections into one document:
 
 ### Step 6B: Assemble the Test Plan
 
-*Run only if the Test Plan was generated in Step 5B.*
+*Always run.*
 
 Reorganize the generated test cases by test type. Each test case belongs to exactly one top-level section based on its **Type** field:
 
@@ -475,7 +474,7 @@ Assembled document structure:
 
 ### Step 6C: Assemble the Implementation Plan
 
-*Run only if the Implementation Plan was generated in Step 5C.*
+*Always run.*
 
 Combine all task groups into one document:
 
@@ -528,7 +527,7 @@ Combine all task groups into one document:
 
 Convert each assembled document to HTML. Use `<h2>`, `<h3>` for headings, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` for tables, `<pre><code class="language-...">` for code blocks, `<ul>`/`<ol>`/`<li>` for lists, `<strong>` for bold. Preserve Mermaid diagrams as `<pre><code class="language-mermaid">...</code></pre>` blocks so Confluence keeps the source text even when it does not render Mermaid natively. Do not wrap content in `<html>`, `<head>`, or `<body>` tags.
 
-**7a. Publish the SDD** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `sddSpaceId`/`sddParentId` if separate destinations were chosen). Call `createConfluencePage` with:
+**7a. Publish the SDD** — use the `spaceId`/`parentId` resolved in Step 3 (or `sddSpaceId`/`sddParentId` if separate destinations were chosen). Call `createConfluencePage` with:
 - `cloudId`
 - `spaceId`, `parentId` (omit `parentId` if the user chose space root)
 - `title` — `"SDD: [PRD title]"`
@@ -538,7 +537,7 @@ Convert each assembled document to HTML. Use `<h2>`, `<h3>` for headings, `<tabl
 
 If a page with that title already exists, call `updateConfluencePage` instead, or ask the user if they want a new page with a date suffix: `SDD: [PRD title] (YYYY-MM-DD)`.
 
-**7b. Publish the Test Plan** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `tpSpaceId`/`tpParentId` if separate destinations were chosen). Call `createConfluencePage` with:
+**7b. Publish the Test Plan** — use the `spaceId`/`parentId` resolved in Step 3 (or `tpSpaceId`/`tpParentId` if separate destinations were chosen). Call `createConfluencePage` with:
 - `cloudId`
 - `spaceId`, `parentId` (omit `parentId` if the user chose space root)
 - `title` — `"Test Plan: [PRD title]"`
@@ -547,7 +546,7 @@ If a page with that title already exists, call `updateConfluencePage` instead, o
 
 If a page with that title already exists, call `updateConfluencePage` instead, or ask the user whether they want a date-suffixed title: `Test Plan: [PRD title] (YYYY-MM-DD)`.
 
-**7c. Publish the Implementation Plan** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `implSpaceId`/`implParentId` if separate destinations were chosen). Call `createConfluencePage` with:
+**7c. Publish the Implementation Plan** — use the `spaceId`/`parentId` resolved in Step 3 (or `implSpaceId`/`implParentId` if separate destinations were chosen). Call `createConfluencePage` with:
 - `cloudId`
 - `spaceId`, `parentId` (omit `parentId` if the user chose space root)
 - `title` — `"Implementation Plan: [PRD title]"`
