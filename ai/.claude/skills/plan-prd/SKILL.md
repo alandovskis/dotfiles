@@ -1,19 +1,21 @@
 ---
 name: plan-prd
 description: |-
-  Reads a PRD from a Confluence page and generates a Software Design Document
-  and/or a System Test Plan, using a generator-reviewer loop per requirement
-  for each. Publishes the assembled document(s) to Confluence under a
-  user-specified space and parent page.
+  Reads a PRD from a Confluence page and generates a Software Design Document,
+  System Test Plan, and/or Implementation Plan with task breakdown, using a
+  generator-reviewer loop per requirement for each. Publishes the assembled
+  document(s) to Confluence under a user-specified space and parent page.
   Trigger when user says: "generate an SDD from a Confluence PRD", "convert PRD
   to SDD", "create a software design document from requirements", "write a design
   doc from a Confluence page", "generate a test plan from a Confluence PRD",
   "create a system test plan from requirements", "convert PRD to test plan",
-  "write a test plan from a Confluence page", "/plan-prd", "/prd-to-sdd",
-  "/prd-to-test-plan", or asks to turn a PRD into a design doc, a test plan, or both.
+  "write a test plan from a Confluence page", "create an implementation plan
+  from a PRD", "break a PRD into implementation tasks", "/plan-prd",
+  "/prd-to-sdd", "/prd-to-test-plan", or asks to turn a PRD into a design doc,
+  a test plan, an implementation plan, or any combination of those artifacts.
 ---
 
-You are turning a Confluence PRD into a Software Design Document (SDD), a System Test Plan, or both. For each requirement, run an internal generator-reviewer loop per selected artifact to produce a high-quality section, then publish the assembled document(s) back to Confluence. Follow the steps below precisely.
+You are turning a Confluence PRD into a Software Design Document (SDD), System Test Plan, Implementation Plan, or any combination of those artifacts. For each requirement, run an internal generator-reviewer loop per selected artifact to produce a high-quality section, then publish the assembled document(s) back to Confluence. Follow the steps below precisely.
 
 ## Step 1: Resolve cloud ID and choose source PRD
 
@@ -30,7 +32,8 @@ You are turning a Confluence PRD into a Software Design Document (SDD), a System
 Ask the user via AskUserQuestion which artifact(s) to generate:
 - **Software Design Document**
 - **System Test Plan**
-- **Both**
+- **Implementation Plan**
+- **Any combination of the above**
 
 This choice gates which parts of Steps 3, 5, 6, and 7 run below.
 
@@ -38,9 +41,9 @@ This choice gates which parts of Steps 3, 5, 6, and 7 run below.
 
 **3a. Single artifact selected** — ask the user via AskUserQuestion whether to publish to the same space as the PRD or a different one. If the same space, re-use the space `id` already resolved. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list. Then call `getPagesInConfluenceSpace` with the destination space `id` and present every returned page title via AskUserQuestion so the user can choose the parent page (include "space root" as an explicit option). Store the resolved `spaceId` and `parentId`.
 
-**3b. Both artifacts selected** — ask the user via AskUserQuestion whether the SDD and Test Plan should publish to the same space/parent page or to different ones.
-- **Same** — resolve one destination as in 3a and store it as `spaceId`/`parentId`, used for both documents.
-- **Different** — resolve a destination as in 3a for the SDD (`sddSpaceId`/`sddParentId`), then resolve a second destination the same way for the Test Plan (`tpSpaceId`/`tpParentId`).
+**3b. Multiple artifacts selected** — ask the user via AskUserQuestion whether all generated artifacts should publish to the same space/parent page or to different ones.
+- **Same** — resolve one destination as in 3a and store it as `spaceId`/`parentId`, used for every generated document.
+- **Different** — resolve a destination as in 3a for each selected artifact, storing `sddSpaceId`/`sddParentId`, `tpSpaceId`/`tpParentId`, and/or `implSpaceId`/`implParentId` as applicable.
 
 ## Step 4: Extract requirements
 
@@ -61,17 +64,17 @@ Also extract any design-system context from the PRD, including:
 - Named design system, component library, style guide, accessibility rules, platform conventions, or brand constraints
 
 Present the list to the user and confirm before generating:
-> "I found [N] requirements: [list with UI Component: Yes/No]. Shall I generate the [SDD / test plan / SDD and test plan]?"
+> "I found [N] requirements: [list with UI Component: Yes/No]. Shall I generate the [SDD / test plan / implementation plan / selected artifacts]?"
 
 If the document has no identifiable requirements, tell the user and stop.
 
 ## Step 5: Generator-reviewer loops
 
-For **each requirement**, run the loop(s) below for each artifact type chosen in Step 2. The two loops are independent of each other — run whichever apply, in either order.
+For **each requirement**, run the loop(s) below for each artifact type chosen in Step 2. The loops are independent of each other — run whichever apply, in either order.
 
 ### Step 5A: SDD loop — one section per requirement
 
-*Run only if the SDD (or Both) was selected in Step 2.*
+*Run only if the SDD was selected in Step 2.*
 
 #### Pass 1 — Generator
 
@@ -156,7 +159,7 @@ After the second review, if still REVISE: accept the section with a `⚠️ Need
 
 ### Step 5B: Test Plan loop — one group per requirement
 
-*Run only if the System Test Plan (or Both) was selected in Step 2.*
+*Run only if the System Test Plan was selected in Step 2.*
 
 Launch three independent subagents using the Agent tool. Each agent is started fresh (not a fork) so the reviewer has no memory of the generation reasoning — giving genuinely independent feedback.
 
@@ -254,6 +257,83 @@ Store the output as `revised_draft`. Then re-run Agent 2 (reviewer) against `rev
 - Either review returns `APPROVED` → use those test cases as the final output for this requirement.
 - Second review still returns `REVISE` → accept `revised_draft` as-is; prepend `⚠️ Needs Human Review: [paste the outstanding reviewer items]` to the test case block for this requirement.
 - Maximum 2 revision rounds. Never loop further.
+
+### Step 5C: Implementation Plan loop — one task group per requirement
+
+*Run only if the Implementation Plan was selected in Step 2.*
+
+#### Pass 1 — Generator
+
+Draft an implementation task group for the requirement. Write tasks that an AI coding agent can execute without rereading the PRD and without asking the user follow-up questions. Use concrete language and include dependency order, validation gates, acceptance criteria, expected files/modules/interfaces where inferable, and explicit assumptions for any PRD gap. Do not create vague tasks such as "implement backend" or "add tests".
+
+The implementation plan must be autonomous-execution ready:
+- Do not leave "ask user", "TBD", "decide later", "confirm approach", or unowned discovery as implementation blockers.
+- If the PRD lacks a detail, choose a conservative implementation assumption, label it, and add a verification task that can prove or disprove it without user intervention.
+- Every task must state the concrete output an AI should produce: code, schema migration, API contract, UI state, test, fixture, config, documentation, or rollout change.
+- Every task must include enough context to implement safely: target component/module, input/output contract, data shape, error behavior, permissions, and validation command when applicable.
+- Tasks may reference SDD/Test Plan sections when generated, but must still stand alone if those artifacts are unavailable.
+
+Each requirement task group must include:
+
+**Requirement Summary** — requirement ID, title, and short implementation goal.
+
+**Implementation Strategy** — 1–3 paragraphs explaining sequencing, ownership boundaries, architecture dependencies, and rollout approach.
+
+**Task Breakdown** — table with columns: Task ID | Task | Type | Target Files / Modules | Owner Role | Dependencies | Estimate | Acceptance Criteria | Validation. Task IDs must be stable and requirement-scoped, e.g. `IMP-REQ-001-01`. Types must be one of: Discovery, Backend, Frontend, Data, Infrastructure, Testing, Security, Documentation, Release. Discovery tasks must produce repo-local artifacts or decisions and cannot require user input.
+
+**Execution Order** — numbered list of task IDs in dependency order, grouped into milestones when useful.
+
+**Parallelizable Work** — list task IDs that can run in parallel and note what shared interfaces or contracts must be agreed first.
+
+**Testing and Verification Tasks** — include at least one unit/integration/system verification task, and link each to SDD design areas or Test Plan cases when those artifacts are also generated.
+
+**Autonomous Execution Notes** — list implementation assumptions, inferred defaults, repo discovery commands, validation commands, required fixtures, feature flags, environment variables, and rollback commands. This section must make clear how an AI agent should proceed if it encounters missing optional context.
+
+**Release / Migration Tasks** — data migrations, feature flags, backfills, rollout, monitoring, rollback, and documentation tasks. If none: "N/A — no release or migration tasks required."
+
+**Risks and Blockers** — table: Risk/Blocker | Impact | Mitigation | Owner | Target Date. Include open PRD questions that block implementation.
+
+#### Pass 2 — Reviewer
+
+Spawn a subagent using the Agent tool with the following prompt:
+
+> You are a critical engineering manager reviewing an implementation plan task group. Your only job is to find planning gaps — do not rewrite the plan yourself.
+>
+> **Requirement:**
+> [requirement ID, title, full description, and UI Component: Yes/No]
+>
+> **Draft implementation task group:**
+> [full draft text]
+>
+> Review against these criteria:
+>
+> **Must pass** (flag any failure):
+> - Every material clause of the requirement is represented by at least one task
+> - The task group is suitable for an AI coding agent to implement without user intervention: no "ask user", unowned TBDs, unresolved choices, or vague discovery blockers remain
+> - Missing PRD details are handled with explicit conservative assumptions plus verification tasks, not deferred to the user
+> - Task breakdown has stable task IDs, target files/modules where inferable, concrete owners by role, dependencies, estimates, acceptance criteria, and validation commands
+> - Execution order is coherent and no task depends on work that appears later without being declared
+> - Testing/verification work is explicit and not collapsed into implementation tasks
+> - Release, migration, feature flag, monitoring, rollback, or documentation work is included where relevant, or explicitly marked N/A with a reason
+> - Risks/blockers have owners and target dates
+>
+> **Should pass** (flag if 2 or more fail):
+> - Tasks are small enough to become Jira stories or sub-tasks
+> - Tasks state concrete code/data/config/doc outputs rather than activities
+> - Parallelizable work is identified
+> - Estimates are plausible relative sizes such as S/M/L or day ranges
+> - Cross-artifact references to SDD/Test Plan are included when those artifacts are generated
+> - User-facing requirements include frontend, accessibility, and UX verification tasks
+>
+> Respond with exactly one of:
+> - `APPROVED`
+> - `REVISE:\n1. [section] — [specific gap and what to add]\n2. ...`
+
+#### Pass 3 — Revision
+
+If the subagent returned REVISE: apply every cited gap, then spawn a fresh reviewer subagent with the revised draft using the same prompt above.
+
+After the second review, if still REVISE: accept the task group with a `⚠️ Needs Human Review: [outstanding issues]` prefix. Maximum 2 revision rounds per requirement — never loop further.
 
 ---
 
@@ -393,6 +473,55 @@ Assembled document structure:
 | [Risk 1] | High/Med/Low | High/Med/Low | [Mitigation] |
 ```
 
+### Step 6C: Assemble the Implementation Plan
+
+*Run only if the Implementation Plan was generated in Step 5C.*
+
+Combine all task groups into one document:
+
+```
+# Implementation Plan: [PRD title]
+
+**Source PRD**: [Confluence link]
+**Status**: Draft
+**Date**: [today]
+
+## Implementation Overview
+[2–4 sentences summarising how the work is sequenced and what the main delivery risks are]
+
+## Autonomous Execution Contract
+- **No user intervention required:** [state the assumptions and defaults that let an AI agent proceed]
+- **Repository discovery commands:** [commands the implementer should run first, e.g. rg/find/test discovery]
+- **Validation commands:** [unit, integration, lint, typecheck, migration, and smoke-test commands]
+- **Feature flags / config:** [flags, env vars, rollout defaults, and rollback switches]
+- **Fallback rule:** If optional context is missing, use the documented assumptions and add/adjust tests rather than pausing for user input.
+
+## Delivery Milestones
+| Milestone | Goal | Requirement IDs | Exit Criteria |
+|-----------|------|-----------------|---------------|
+| M1 | ... | REQ-001, REQ-002 | ... |
+
+## Cross-Requirement Dependency Map
+[Mermaid dependency graph when useful; otherwise a table of dependency relationships]
+
+## Task Summary
+| Task ID | Requirement | Task | Type | Target Files / Modules | Owner Role | Dependencies | Estimate | Acceptance Criteria | Validation | Status |
+|---------|-------------|------|------|------------------------|------------|--------------|----------|---------------------|------------|--------|
+| IMP-REQ-001-01 | REQ-001 | ... | Backend | src/... | Backend Engineer | — | M | ... | ... | Draft |
+
+---
+[REQ-001 implementation task group]
+---
+[REQ-002 implementation task group]
+...
+
+## Release Plan
+[Feature flags, migrations, backfills, rollout sequence, monitoring, rollback, and documentation]
+
+## Open Risks and Blockers
+[Consolidated risks/blockers with owner and target date]
+```
+
 ---
 
 ## Step 7: Publish to Confluence
@@ -418,9 +547,19 @@ If a page with that title already exists, call `updateConfluencePage` instead, o
 
 If a page with that title already exists, call `updateConfluencePage` instead, or ask the user whether they want a date-suffixed title: `Test Plan: [PRD title] (YYYY-MM-DD)`.
 
+**7c. Publish the Implementation Plan** *(if generated)* — use the `spaceId`/`parentId` resolved in Step 3 (or `implSpaceId`/`implParentId` if separate destinations were chosen). Call `createConfluencePage` with:
+- `cloudId`
+- `spaceId`, `parentId` (omit `parentId` if the user chose space root)
+- `title` — `"Implementation Plan: [PRD title]"`
+- `body` — assembled implementation plan as HTML
+- `contentFormat` — `"html"`
+
+If a page with that title already exists, call `updateConfluencePage` instead, or ask the user whether they want a date-suffixed title: `Implementation Plan: [PRD title] (YYYY-MM-DD)`.
+
 On success, report every page published:
 > "✅ SDD published: [Confluence page URL]"
 > "✅ Test plan published: [Confluence page URL]"
+> "✅ Implementation plan published: [Confluence page URL]"
 
 ## Edge cases
 
