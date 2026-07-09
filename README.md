@@ -10,6 +10,7 @@ Personal dotfiles and small utility scripts for shell and development tools.
 - `iterm2/` - iTerm2 color preset (Zenburn).
 - `jetbrains/.ideavimrc` - IdeaVim mappings for navigation, refactors, and VCS.
 - `kdiff3/.kdiff3rc` - KDiff3 UI and merge preferences.
+- `codex/.codex/config.toml` - Codex config, including MCP servers for Atlassian, Playwright, and Pencil.
 - `rspec/.rspec` - colorized RSpec output.
 - `zsh/` - zsh environment setup, login config, and aliases.
 
@@ -59,10 +60,22 @@ ln -sf "$(pwd)/gem/.gemrc" "$HOME/.gemrc"
 ln -sf "$(pwd)/rspec/.rspec" "$HOME/.rspec"
 ln -sf "$(pwd)/jetbrains/.ideavimrc" "$HOME/.ideavimrc"
 ln -sf "$(pwd)/kdiff3/.kdiff3rc" "$HOME/.kdiff3rc"
+mkdir -p "$HOME/.codex"
+ln -sf "$(pwd)/codex/.codex/config.toml" "$HOME/.codex/config.toml"
 ```
 
 GNU Stow example:
 
 ```sh
-stow -t "$HOME" git zsh curl gem rspec jetbrains kdiff3
+stow -t "$HOME" git zsh curl gem rspec jetbrains kdiff3 codex
 ```
+
+The Atlassian MCP server uses the `mcp-remote` bridge. Verify the configured
+server after installation:
+
+```sh
+codex mcp get atlassian
+```
+
+On first use in Codex, the bridge opens the Atlassian OAuth flow for Jira and
+Confluence access.

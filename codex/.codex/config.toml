@@ -1,0 +1,82 @@
+model = "gpt-5.5"
+personality = "pragmatic"
+model_reasoning_effort = "medium"
+
+[projects."/Users/alex/src/ansible"]
+trust_level = "trusted"
+
+[projects."/Users/alex/src/mobilispect"]
+trust_level = "trusted"
+
+[projects."/Users/alex/dotfiles"]
+trust_level = "untrusted"
+
+[projects."/Users/alex/src/symphony"]
+trust_level = "trusted"
+
+[projects."/Users/alex/src/mobilispect/.symphony/workspaces/MSPECT-19"]
+trust_level = "trusted"
+
+[projects."/Users/alex/src/mobilispect/.symphony/workspaces/MSPECT-35"]
+trust_level = "trusted"
+
+[notice]
+hide_gpt5_1_migration_prompt = true
+"hide_gpt-5.1-codex-max_migration_prompt" = true
+
+[notice.model_migrations]
+"gpt-5.1-codex-max" = "gpt-5.2-codex"
+"gpt-5.2-codex" = "gpt-5.3-codex"
+"gpt-5.3-codex" = "gpt-5.4"
+
+[features]
+unified_exec = true
+
+[mcp_servers.atlassian]
+command = "npx"
+args = [ "-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse" ]
+
+[mcp_servers.playwright]
+args = [ "@playwright/mcp@latest" ]
+command = "npx"
+
+[mcp_servers.pencil]
+command = "/Applications/Pencil.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64"
+args = [ "--app", "desktop" ]
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."superpowers@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[marketplaces.openai-bundled]
+last_updated = "2026-05-31T03:11:31Z"
+source_type = "local"
+source = "/Users/alex/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-05-31T05:20:50Z"
+source_type = "local"
+source = "/Users/alex/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[marketplaces.ecc]
+last_updated = "2026-07-08T23:23:43Z"
+last_revision = "38a7ebbe3294be9bfda5612c6d696742ade6fbb2"
+source_type = "git"
+source = "https://github.com/affaan-m/ECC.git"
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
