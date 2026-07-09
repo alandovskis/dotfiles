@@ -1,85 +1,53 @@
 # dotfiles
 
-Personal dotfiles and small utility scripts for shell and development tools.
+Personal dotfiles for shell, editor, Git, AI agent, and small tool configuration.
 
-## Contents
+## Layout
 
-- `curl/.curlrc` - curl defaults (progress bar, auto referer, timeout).
-- `gem/.gemrc` - disable gem documentation by default.
-- `git/.gitconfig` - git defaults, aliases, delta integration, diff3 conflicts.
-- `iterm2/` - iTerm2 color preset (Zenburn).
-- `jetbrains/.ideavimrc` - IdeaVim mappings for navigation, refactors, and VCS.
-- `kdiff3/.kdiff3rc` - KDiff3 UI and merge preferences.
-- `ai/.claude/` - Claude Code config, including commands, hooks, skills, and settings.
-- `ai/.codex/config.toml` - Codex config, including MCP servers for Atlassian, Playwright, and Pencil.
-- `ai/.codex/skills` - symlink to `ai/.claude/skills` so Claude and Codex share custom skills.
-- `rspec/.rspec` - colorized RSpec output.
-- `zsh/` - zsh environment setup, login config, and aliases.
-
-## Zsh notes
-
-- `zsh/.zshenv` sets PATH entries and common directory environment variables.
-- `zsh/.zshrc` loads `zsh/.zsh/aliases.sh`.
-- `zsh/.zlogin` loads RVM if present.
-
-## Git notes
-
-- Uses `delta` as the pager and interactive diff filter.
-- Adds convenience aliases like `st`, `co`, `lol`, and `lola`.
-
-## IdeaVim mappings (JetBrains)
-
-Leader key is Space. Highlights:
-
-- Navigation: `gc` comment line, `gd` go to implementation, `gD` go to declaration,
-  `j`/`k` move between methods.
-- Search/replace: `Space/` find in path, `Space*` replace in path.
-- Files: `Spacefr` recent files, `Spacefs` save all, `Spacefx` new scratch file.
-- Git: `Spacega` add, `Spacegbc` create branch, `SpacegB` branches, `Spacegl` log,
-  `Spacegm` merge, `Spacegr` rebase, `Spacegzz` stash/unstash.
-- Jump: `Spacejc` class, `Spacejf` file, `Spacejs` symbol, `Spacejt` test.
-- Refactor: `SpacerM` extract method, `Spacern` rename, `Spacerp` introduce
-  parameter, `Spacerv` introduce variable.
-- Run/debug: `Spaced` debug, `Spacex` run, `SpaceX` run configuration.
-
-## Usage
-
-Copy or symlink the files you want into your home directory or tool-specific
-config locations.
+- `ai/.claude/` — Claude Code settings, hooks, commands, routines, rules, and skills.
+- `ai/.codex/` — Codex config and a `skills` symlink to `../.claude/skills`.
+- `curl/.curlrc` — curl defaults.
+- `git/.gitconfig` — Git aliases, delta pager, and merge/diff defaults.
+- `jetbrains/.ideavimrc` — IdeaVim mappings.
+- `kdiff3/.kdiff3rc` — KDiff3 preferences.
+- `macos/` and `linux/` — platform-specific config files.
+- `ruby/.gemrc` and `ruby/.rspec` — Ruby tool defaults.
+- `zsh/` — zsh environment, login config, rc file, and aliases.
 
 ## Setup
 
-From the repo root, symlink what you want (or use GNU Stow):
+Use GNU Stow for the simple packages you want:
+
+```sh
+stow -t "$HOME" git zsh curl ruby jetbrains kdiff3
+```
+
+Link AI-agent config explicitly:
+
+```sh
+mkdir -p "$HOME/.codex"
+ln -sf "$(pwd)/ai/.codex/config.toml" "$HOME/.codex/config.toml"
+ln -sfn "$(pwd)/ai/.codex/skills" "$HOME/.codex/skills"
+ln -sfn "$(pwd)/ai/.claude" "$HOME/.claude"
+```
+
+Or create individual symlinks for everything:
 
 ```sh
 ln -sf "$(pwd)/git/.gitconfig" "$HOME/.gitconfig"
 ln -sf "$(pwd)/zsh/.zshenv" "$HOME/.zshenv"
 ln -sf "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
 ln -sf "$(pwd)/zsh/.zlogin" "$HOME/.zlogin"
-ln -sf "$(pwd)/zsh/.zsh" "$HOME/.zsh"
+ln -sfn "$(pwd)/zsh/.zsh" "$HOME/.zsh"
 ln -sf "$(pwd)/curl/.curlrc" "$HOME/.curlrc"
-ln -sf "$(pwd)/gem/.gemrc" "$HOME/.gemrc"
-ln -sf "$(pwd)/rspec/.rspec" "$HOME/.rspec"
+ln -sf "$(pwd)/ruby/.gemrc" "$HOME/.gemrc"
+ln -sf "$(pwd)/ruby/.rspec" "$HOME/.rspec"
 ln -sf "$(pwd)/jetbrains/.ideavimrc" "$HOME/.ideavimrc"
 ln -sf "$(pwd)/kdiff3/.kdiff3rc" "$HOME/.kdiff3rc"
 ln -sfn "$(pwd)/ai/.claude" "$HOME/.claude"
-mkdir -p "$HOME/.codex"
-ln -sf "$(pwd)/ai/.codex/config.toml" "$HOME/.codex/config.toml"
-ln -sfn "$(pwd)/ai/.claude/skills" "$HOME/.codex/skills"
 ```
 
-GNU Stow example:
+## Notes
 
-```sh
-stow -t "$HOME" git zsh curl gem rspec jetbrains kdiff3 ai
-```
-
-The Atlassian MCP server uses the `mcp-remote` bridge. Verify the configured
-server after installation:
-
-```sh
-codex mcp get atlassian
-```
-
-On first use in Codex, the bridge opens the Atlassian OAuth flow for Jira and
-Confluence access.
+- Codex and Claude share custom skills through `ai/.codex/skills -> ../.claude/skills`.
+- The Codex Atlassian MCP server uses `mcp-remote` with Atlassian's Streamable HTTP endpoint. Check it with `codex mcp get atlassian`.
