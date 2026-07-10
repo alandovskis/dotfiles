@@ -1,4 +1,4 @@
-model = "gpt-5.5"
+model = "gpt-5.6-terra"
 personality = "pragmatic"
 model_reasoning_effort = "medium"
 
@@ -73,10 +73,14 @@ source_type = "local"
 source = "/Users/alex/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
 
 [marketplaces.ecc]
-last_updated = "2026-07-08T23:23:43Z"
-last_revision = "38a7ebbe3294be9bfda5612c6d696742ade6fbb2"
+last_updated = "2026-07-10T01:07:42Z"
+last_revision = "40927950c49f6e742d341e20ff7b9b7e1e7bfff5"
 source_type = "git"
 source = "https://github.com/affaan-m/ECC.git"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir", "git-branch", "pull-request-number", "branch-changes", "run-state", "five-hour-limit", "context-used", "weekly-limit", "used-tokens"]
+status_line_use_colors = true
 
 [tui.model_availability_nux]
 "gpt-5.5" = 4
