@@ -129,7 +129,7 @@ Read `references/loop-a.md` now and follow it completely (A1 Planner → A2 Gene
 
 ## Step 5: Loop B — Implement the Task Breakdown as production code
 
-Read `references/loop-b.md` now and follow it completely (B1 Planner → B2 Generator → B3 Reviewer → B4 Test gate → B5 Full system test run).
+Read `references/loop-b.md` now and follow it completely (B1 Planner → B2 Task subagent, one per task, containing its own generate → review → test-fix cycle → B3 Record result and commit → B4 Full system test run).
 
 ---
 
@@ -201,5 +201,5 @@ Loop A result: [N] compiled, all failing before production code (expected).
 ## Additional resources
 
 - **`references/loop-a.md`** — Step 4 in full: A1–A4, including the A3 reviewer prompt
-- **`references/loop-b.md`** — Step 5 in full: B1–B5, including the B3 reviewer prompt
+- **`references/loop-b.md`** — Step 5 in full: B1–B4. Each task's generate/review/test-fix cycle runs in a fresh per-task subagent so the main thread only keeps a one-line result per task
 - **`references/implementation-patterns.md`** — language-specific patterns for common task-specification constructs (REST handlers, ORMs, auth middleware, migrations)

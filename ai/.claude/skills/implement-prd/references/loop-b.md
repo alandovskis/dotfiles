@@ -1,53 +1,51 @@
 # Step 5: Loop B — Implement the Task Breakdown as production code
 
-Read this file after Loop A (`references/loop-a.md`) completes. Loop B runs a full **planner → generator → reviewer** cycle to implement each task from the Task Breakdown. The approval gate for each task is: **the reviewer approves AND the task's unit tests AND integration tests all pass**.
+Read this file after Loop A (`references/loop-a.md`) completes. Loop B implements each task from the Task Breakdown, test-first, gated by review and passing tests. Generation, review, and the test-fix loop for a task run inside **one fresh subagent per task** — the main thread never holds a task's file contents, tool output, or reviewer transcript. It only keeps a short result line per task, so context stays flat regardless of how many tasks the plan has.
 
-## B1 — Planner
+## B1 — Planner (main thread)
 
 Produce a production implementation plan:
 - **File map** — for each task: files to create or modify, taken from its Target Files / Modules column, paths relative to target directory
 - **Interface contracts** — function signatures, class interfaces, or type definitions that cross task boundaries, inferred from Acceptance Criteria and Parallelizable Work's shared-interface notes
 - **Build order** — the Execution Order sequence from Step 3, validated against each task's Dependencies column (models/data tasks → services/backend tasks → frontend/handlers → release tasks)
 - **Existing code audit** — read the target directory; identify files already present that the plan must integrate with rather than replace
-- **Unit test file map** — one unit test file per Backend/Frontend/Data task (e.g. `tests/unit/test_status_normaliser.py`); these are written by Loop B and test individual functions in isolation
-- **Integration test file map** — one integration test file per subsystem boundary implied by task Dependencies (e.g. `tests/integration/test_fetch_pipeline.py`); these test task interactions against a real DB or queue
+- **Unit test file map** — one unit test file per Backend/Frontend/Data task (e.g. `tests/unit/test_status_normaliser.py`)
+- **Integration test file map** — one integration test file per subsystem boundary implied by task Dependencies (e.g. `tests/integration/test_fetch_pipeline.py`)
 
-Summarise the plan in ≤15 lines, then proceed without waiting.
+Summarise the plan in ≤15 lines, then proceed without waiting. Keep this summary — B2 hands the relevant slice of it to each task's subagent.
 
-## B2 — Generator (per task, in Execution Order)
+## B2 — Task subagent (per task, in Execution Order)
 
-For each task:
+For each task, one at a time, spawn a fresh subagent (not a fork) via the Agent tool. Give it only what this task needs: its own row from the Task Breakdown, the relevant slice of B1's file map / interface contracts / build order, the repository discovery and validation commands from the Autonomous Execution Contract, and — only if this task's Dependencies reference an earlier task — that earlier task's one-line outcome from the checklist. Never pass a prior task's full generation, review, or test output forward.
 
-1. Read existing files this task extends or depends on before writing.
-2. Write unit tests for this task's functions/methods in isolation (mock all external I/O). Cover the happy path and every error condition implied by the Acceptance Criteria and Validation columns; assert exact return values, raised exceptions, or emitted log entries.
-3. Write integration tests for this task's interactions (real DB, real queue, mocked external APIs). Establish real DB state (seed rows, not mocks); assert DB state changes, not just return values.
-4. Write complete, production-ready implementation code:
-   - Match the project's naming conventions, import style, error handling idioms
-   - Implement **all** behaviour the Acceptance Criteria requires — no stubs, TODOs, or placeholders
-   - For `Discovery` tasks, produce the repo-local artifact or decision the task specifies (not code) and record it where later tasks can reference it
-   - For `Release` tasks, implement the migration/flag/rollout/rollback work described, following the Release Plan
-   - Include only the types, functions, and exports the task requires
-5. Run the task's Validation command, if one is specified, and confirm it passes before marking the task done.
-6. Remove any Loop A stubs for this task.
+Use this prompt, substituting the bracketed task fields:
 
-Log: `"Loop B — implemented [Task ID]: [Task]"`.
-
-## B3 — Reviewer (subagent, per task)
-
-Spawn a fresh subagent via the Agent tool with this prompt:
-
+> You are implementing one task from an Implementation Plan, test-first, end to end. Work entirely within this task's scope — do not touch files outside it.
+>
+> **Task:** [Task ID] [Task] ([Type])
+> **Target Files / Modules:** [...]
+> **Dependencies:** [...] — [prior task's one-line outcome, if any]
+> **Acceptance Criteria:** [...]
+> **Validation:** [...]
+> **Repository discovery / validation commands:** [from the Autonomous Execution Contract]
+>
+> **1. Generate.**
+> - Read existing files this task extends or depends on before writing.
+> - Write unit tests for this task's functions/methods in isolation (mock all external I/O). Cover the happy path and every error condition implied by the Acceptance Criteria and Validation; assert exact return values, raised exceptions, or emitted log entries.
+> - Write integration tests for this task's interactions (real DB, real queue, mocked external APIs). Establish real DB state (seed rows, not mocks); assert DB state changes, not just return values.
+> - Write complete, production-ready implementation code: match the project's naming conventions, import style, and error handling idioms; implement **all** behaviour the Acceptance Criteria requires — no stubs, TODOs, or placeholders; include only the types, functions, and exports the task requires. For `Discovery` tasks, produce the repo-local artifact or decision the task specifies (not code). For `Release` tasks, implement the migration/flag/rollout/rollback work described.
+> - Remove any Loop A stubs for this task.
+>
+> **2. Review.** Spawn a fresh subagent (not a fork) via the Agent tool with this exact prompt, substituting this task's specification, implemented files, and their content:
+>
+> """
 > You are a critical senior engineer reviewing an implementation against its Implementation Plan task specification. Find gaps only — do not rewrite code.
 >
 > **Task:** [Task ID] [Task] ([Type])
->
 > **Task specification:** Target Files / Modules: [...] · Dependencies: [...] · Acceptance Criteria: [...] · Validation: [...]
->
 > **Files implemented:** [list of production file paths]
->
 > **Unit test files:** [list of unit test file paths]
->
 > **Integration test files:** [list of integration test file paths]
->
 > **Code content:** [full content of each written file]
 >
 > **Must pass** (flag any failure):
@@ -68,46 +66,40 @@ Spawn a fresh subagent via the Agent tool with this prompt:
 > Respond with exactly one of:
 > - `APPROVED`
 > - `REVISE:\n1. [file:line-range] — [specific gap and what to add]\n2. ...`
+> """
+>
+> If `REVISE`: apply every cited gap, then spawn another fresh reviewer subagent with the same prompt above. After the second review, if still `REVISE`: stop revising — this task ends as `⚠️ Needs Human Review`.
+>
+> **3. Test gate.** Once reviewed (approved, or exhausted at `⚠️ Needs Human Review`), run this task's unit and integration tests. Detect the commands from, in priority order: the task's own Validation column if it names a runnable command; `package.json` scripts (`test:unit`, `test:integration`); `Makefile` targets (`make test-unit`, `make test-integration`); language defaults with path filters (`pytest tests/unit/test_task.py`, `go test ./internal/task/...`). If services are required (DB, queue), check `docker-compose.yml` and start them via Bash first.
+>
+> The task is not done until both unit and integration tests pass. For any failing test: read the failing test and the implementation file it exercises; fix the implementation if the Acceptance Criteria backs the expected behaviour, or fix the test only if its assertion is wrong relative to the Acceptance Criteria; re-run after each fix, never batching fixes. Stop after 3 fix-and-rerun cycles per failing test — mark it `⚠️ Test unresolved` with the error output.
+>
+> **4. Final re-review gate.** If any production or test file changed after the review in step 2 (i.e. during the test-fix cycles in step 3), spawn one more fresh reviewer subagent (same prompt as step 2, updated file contents) against the final code. This counts toward the same 2-round cap as step 2 — if it returns `REVISE` again, stop and mark the task `⚠️ Needs Human Review` instead of done.
+>
+> **5. Return exactly this to the caller — nothing else** (no file contents, no tool output, no reviewer transcripts):
+> - Task ID
+> - Status: `done` | `⚠️ Needs Human Review: [one-line reason]` | `⚠️ Test unresolved: [one-line reason]`
+> - Unit tests: [P]/[F], Integration tests: [P]/[F] (final counts from the last test run)
+> - Files touched (production + unit test + integration test paths, one per line)
+> - One-line summary of what was implemented
 
-Wait for the subagent verdict.
+## B3 — Record result and commit (main thread)
 
-## B4 — Test gate (per task)
+Using only the subagent's returned summary (do not re-read the task's files):
 
-After the reviewer approves, run the task's unit tests and integration tests:
+**Update the checklist.** Check off (`- [x]`) the Task ID under its requirement/role heading if status is `done`; otherwise leave it unchecked and append the returned `⚠️` marker and reason.
 
-Detect the test commands from, in order of priority:
-1. The task's own Validation column (if it names a runnable command)
-2. `package.json` scripts (`test:unit`, `test:integration`)
-3. `Makefile` targets (`make test-unit`, `make test-integration`)
-4. Language defaults with path filters (`pytest tests/unit/test_task.py`, `go test ./internal/task/...`)
-
-If services are required (DB, queue), check `docker-compose.yml` and start them via Bash before running.
-
-**The task is not complete until both unit tests AND integration tests pass.** For any failing test:
-1. Read the failing test and the implementation file it exercises
-2. Fix the implementation if the task's Acceptance Criteria backs the expected behaviour
-3. Fix the test only if the assertion is wrong relative to the Acceptance Criteria
-4. Re-run after each fix; never batch multiple fixes before re-running
-
-Stop after 3 fix-and-rerun cycles per failing test; mark it `⚠️ Test unresolved` with the error output.
-
-If the reviewer returned `REVISE:`: apply every cited gap, re-run the reviewer once. After the second review, if still `REVISE:`: mark the task `⚠️ Needs Human Review: [outstanding issues]` and continue. Maximum 2 revision rounds — never loop further.
-
-**Final re-review gate.** A task must never be marked complete on the strength of the B3 review alone if any production or test file changed afterward during fix-and-rerun cycles. If any such file changed, spawn one more fresh B3-reviewer subagent (same prompt, updated file contents) against the final code before checking the box. This final review counts toward the same 2-round revision cap as B3 — if it returns `REVISE` a second time, stop revising and mark the task `⚠️ Needs Human Review: [outstanding issues]` instead of checking it off.
-
-Log: `"After [Task ID]: unit [P]/[F], integration [P]/[F]"`.
-
-**Update the checklist.** Check off (`- [x]`) this Task ID under its requirement/role heading only if: the B3 reviewer (and, when applicable, the final re-review) approved AND both unit and integration tests passed. Otherwise leave it unchecked and append the `⚠️ Needs Human Review` or `⚠️ Test unresolved` marker with a one-line reason.
-
-**Commit the task.** If the target directory is a git repository, create one commit per task immediately after its checklist update, regardless of whether it was checked off or flagged — do not batch commits across tasks and do not wait until Loop B finishes. Stage exactly the files this task touched (production files, unit test files, integration test files, and `IMPLEMENTATION_CHECKLIST.md`) — never `git add -A` or `git add .`. Use a conventional commit:
+**Commit the task.** If the target directory is a git repository, commit now — do not batch commits across tasks. Stage exactly the returned file list plus `IMPLEMENTATION_CHECKLIST.md` — never `git add -A` or `git add .`. Use a conventional commit:
 
 ```
 <type>(<task-id>): <task, imperative mood, lowercase>
 ```
 
-Map the task's Type to `<type>`: Backend | Frontend | Data | Infrastructure | Security → `feat`; Testing → `test`; Documentation → `docs`; Release | Discovery → `chore`. Use the Task ID (lowercased, e.g. `imp-req-001-01`) as the commit scope. If the task was flagged `⚠️ Needs Human Review` or `⚠️ Test unresolved`, append a body line with that exact marker and reason so it's visible in `git log`. Never use `--no-verify`; if a commit hook fails, fix the underlying issue and re-commit rather than skipping it. If the target directory is not a git repository, skip this step silently.
+Map the task's Type to `<type>`: Backend | Frontend | Data | Infrastructure | Security → `feat`; Testing → `test`; Documentation → `docs`; Release | Discovery → `chore`. Use the Task ID (lowercased, e.g. `imp-req-001-01`) as the commit scope. If the task was flagged `⚠️`, append a body line with that exact marker and reason so it's visible in `git log`. Never use `--no-verify`; if a commit hook fails, fix the underlying issue and re-commit rather than skipping it. If the target directory is not a git repository, skip this step silently.
 
-## B5 — Full system test run
+Log: `"After [Task ID]: [status], unit [P]/[F], integration [P]/[F]"`. Then move to the next task's B2 subagent — carry forward only the checklist state and this task's one-line outcome (for the next task's Dependencies context, if applicable), nothing more.
+
+## B4 — Full system test run (main thread)
 
 After all tasks complete Loop B, run the full test suite from Loop A (system tests) against the completed production code:
 
