@@ -8,15 +8,15 @@ description: |-
   documents to Confluence under the chosen space and parent page.
 ---
 
-You are turning a Confluence PRD into three artifacts every time: a Software Design Document (SDD), a System Test Plan, and an autonomous Implementation Plan. For each requirement, run an internal generator-reviewer loop for every artifact to produce high-quality sections, then publish the assembled documents back to Confluence. Follow the steps below precisely.
+Turn a Confluence PRD into three artifacts every time: a Software Design Document (SDD), a System Test Plan, and an autonomous Implementation Plan. For each requirement, run a generator-reviewer loop per artifact, then publish the assembled documents back to Confluence. Follow the steps below precisely.
 
 ## Step 1: Resolve cloud ID and choose source PRD
 
 **1a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-**1b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter — omitting it returns all spaces including collaboration spaces. Present every returned space to the user via AskUserQuestion and ask them to choose the space that contains the PRD.
+**1b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass a `type` filter — omitting it returns all spaces, including collaboration spaces. Present every returned space via AskUserQuestion and ask which one contains the PRD.
 
-**1c. Choose the PRD page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. Present every returned page title to the user via AskUserQuestion and ask them to choose the PRD. If the space has more pages than fit in one response, paginate until all pages are listed before presenting.
+**1c. Choose the PRD page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. Paginate until all pages are listed, then present every title via AskUserQuestion and ask which is the PRD.
 
 **1d. Fetch the PRD** — use the selected page's `id` as `pageId`. Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
 
@@ -33,7 +33,7 @@ Ask the user via AskUserQuestion whether all generated artifacts should publish 
 - **Same** — resolve one destination using the destination-resolution procedure below and store it as `spaceId`/`parentId`, used for every generated document.
 - **Different** — resolve a destination using the destination-resolution procedure below for each artifact, storing `sddSpaceId`/`sddParentId`, `tpSpaceId`/`tpParentId`, and `implSpaceId`/`implParentId`.
 
-Destination-resolution procedure: ask whether to publish to the same space as the PRD or a different one. If the same space, re-use the PRD space `id`. If a different space, call `getConfluenceSpaces` again (no type filter) and present the list. Then call `getPagesInConfluenceSpace` with the destination space `id` and present every returned page title via AskUserQuestion so the user can choose the parent page (include "space root" as an explicit option). Store the resolved destination space and parent IDs using the variable names required by the selected same/different destination mode.
+Destination-resolution procedure: ask whether to publish to the PRD's space or a different one. Same space: reuse the PRD space `id`. Different space: call `getConfluenceSpaces` again (no type filter) and present the list. Either way, call `getPagesInConfluenceSpace` with the destination space `id` and present every title via AskUserQuestion so the user can choose the parent page (include "space root" as an option). Store the resolved space/parent IDs under the variable names required by the chosen same/different mode.
 
 ## Step 4: Extract requirements
 
@@ -48,7 +48,7 @@ For each requirement, record:
 - **Description** — full requirement text, including any acceptance criteria and notes
 - **UI Component** — `Yes` if the requirement row or text indicates a user-facing screen, form, dashboard, report view, navigation, notification, visual workflow, or other interactive/visual interface; otherwise `No`
 
-Also extract any design-system context from the PRD, including:
+Also extract design-system context from the PRD:
 - Links or notes in the Quick Links `Designs` entry
 - Any `## Design` section content
 - Named design system, component library, style guide, accessibility rules, platform conventions, or brand constraints
@@ -68,11 +68,11 @@ For **each requirement**, run all three loops below. The loops are independent o
 
 #### Pass 1 — Generator
 
-Draft the SDD section. Write from the perspective of an experienced software architect. Use concrete language — no "could", "might", or "should consider". Every sub-section below must be populated; write "N/A — [reason]" if it genuinely does not apply.
+Draft the SDD section as an experienced software architect. Use concrete language — no "could", "might", "should consider". Populate every sub-section below; write "N/A — [reason]" only where it genuinely doesn't apply.
 
-If the requirement has `UI Component: Yes`, include a high-fidelity UI mockup that follows the extracted design-system context. The mockup must read like a buildable screen or flow: show the page or component shell, header/body/footer structure, exact control labels, visible content, realistic example data, primary and secondary actions, empty/loading/error/disabled states, and the design-system components/tokens being used. Use Mermaid, ASCII wireframe, Markdown table, or concise HTML/CSS-style pseudomarkup that can survive Confluence publishing. If the PRD does not name a design system, state the assumed design-system baseline before the mockup and use common accessible product UI conventions. Include responsive notes when the UI changes materially on mobile.
+If `UI Component: Yes`, include a high-fidelity UI mockup following the extracted design-system context. It must read like a buildable screen or flow: page/component shell, header/body/footer structure, exact control labels, realistic example content, primary and secondary actions, empty/loading/error/disabled states, and the design-system components/tokens used. Use Mermaid, ASCII wireframe, a Markdown table, or concise HTML/CSS pseudomarkup that survives Confluence publishing. If the PRD names no design system, state the assumed baseline before the mockup and follow common accessible product UI conventions. Add responsive notes when the UI changes materially on mobile.
 
-Include Mermaid diagrams where they clarify the design. Use them for architecture flows, sequence diagrams, state machines, entity relationships, data pipelines, deployment topology, or decision workflows when prose or tables alone would be harder to review. Do not force a diagram for trivial requirements. Mermaid diagrams must be fenced code blocks with `mermaid` as the language and must have a short lead-in sentence explaining what the diagram shows.
+Add Mermaid diagrams wherever they clarify the design — architecture flows, sequence diagrams, state machines, entity relationships, data pipelines, deployment topology, or decision workflows — but don't force one for a trivial requirement. Each diagram is a fenced `mermaid` code block with a short lead-in sentence explaining what it shows.
 
 Section structure:
 
@@ -104,36 +104,29 @@ Section structure:
 
 Spawn a subagent using the Agent tool with the following prompt (substitute the actual requirement text and draft section):
 
-> You are a critical senior software engineer reviewing a draft SDD section. Your only job is to find gaps — do not rewrite the section yourself.
+> You are a critical senior software engineer reviewing a draft SDD section. Find gaps only — do not rewrite it.
 >
-> **Requirement:**
-> [requirement ID, title, full description, and UI Component: Yes/No]
+> **Requirement:** [ID, title, full description, UI Component: Yes/No]
 >
-> **Design-system context:**
-> [design links, design section notes, component library, style guide, accessibility rules, platform conventions, or "not specified"]
+> **Design-system context:** [design links, Design section notes, component library, style guide, accessibility rules, platform conventions, or "not specified"]
 >
-> **Draft SDD section:**
-> [full draft text]
->
-> Review against these criteria:
+> **Draft SDD section:** [full draft text]
 >
 > **Must pass** (flag any failure):
-> - Requirement is fully addressed — trace every clause of the requirement text
+> - Every clause of the requirement is addressed
 > - No empty sections (only "N/A — reason" is acceptable)
-> - No internal contradictions
-> - No unowned TBDs
-> - Mermaid diagrams are included where they would clarify non-trivial architecture, data relationships, lifecycle/state transitions, async flows, or review workflows; omitted diagrams have an explicit "N/A — diagram would not clarify..." reason
-> - If UI Component is Yes, the section includes a **UI Mockup** that follows the design-system context and shows a high-fidelity screen or flow with exact labels, example content, primary controls, and relevant states
-> - If UI Component is No, the **UI Mockup** section explicitly says "N/A — no user-facing UI component."
+> - No internal contradictions or unowned TBDs
+> - Mermaid diagrams appear wherever they'd clarify non-trivial architecture, data relationships, lifecycle/state transitions, async flows, or review workflows; each omission has an explicit "N/A — diagram would not clarify..." reason
+> - UI Mockup matches the UI Component flag: if Yes, a high-fidelity screen/flow with exact labels, example content, primary controls, and relevant states, following the design-system context; if No, "N/A — no user-facing UI component."
 >
-> **Should pass** (flag if 2 or more fail):
+> **Should pass** (flag if 2+ fail):
 > - At least one alternative considered and rejected with a concrete reason
-> - Mermaid diagrams use fenced `mermaid` code blocks and are valid enough for Confluence readers to understand without external explanation
+> - Mermaid diagrams are fenced `mermaid` blocks a Confluence reader can follow unaided
 > - Error table covers all five required conditions (400, 403, 404, 409, 503)
 > - Schema changes include constraints and migration strategy
 > - Security checklist covered (auth, validation, PII)
-> - Test scenarios cover happy path, at least one error path, and one edge case
-> - UI mockups identify the design-system components or tokens used, clearly state the design-system assumption when none is specified, and include responsive/state details when applicable
+> - Test scenarios cover happy path, an error path, and an edge case
+> - UI mockups name the design-system components/tokens used, state the assumption explicitly when none is specified, and include responsive/state details where relevant
 >
 > Respond with exactly one of:
 > - `APPROVED`
@@ -157,35 +150,35 @@ Launch three independent subagents using the Agent tool. Each agent is started f
 
 Launch a fresh agent with this prompt, substituting the bracketed values:
 
-> You are a QA engineer writing system-level test cases. Return only the test cases in the exact format specified — no explanation or preamble.
+> You are a QA engineer writing system-level test cases. Return only the test cases in the format below — no preamble.
 >
 > **Requirement**
 > ID: [REQ-ID] — [Title]
-> Description: [full requirement text including acceptance criteria and notes]
+> Description: [full requirement text, including acceptance criteria and notes]
 >
 > **System context**
-> [2–3 sentences from the PRD: what the system does, the tech stack, and any success metrics stated for this requirement]
+> [2–3 sentences: what the system does, the tech stack, and any success metrics stated for this requirement]
 >
 > **Instructions**
-> Write 2–6 test cases covering ALL of the following types. Types 1–4 are always required. Type 5 is required only when the requirement or success metrics state a measurable target (latency, throughput, success rate, time window); otherwise write one line: "Performance: No measurable target defined — omitted."
+> Write 2–6 test cases covering types 1–4 below, always. Add type 5 only when the requirement or success metrics state a measurable target (latency, throughput, success rate, time window); otherwise write one line: "Performance: No measurable target defined — omitted."
 >
-> 1. Happy path — valid, normal inputs; system behaves correctly.
-> 2. Boundary / edge case — inputs at valid-range limits (empty collections, maximum sizes, minimum values, exact threshold values).
-> 3. Negative / invalid input — system rejects or handles invalid inputs gracefully.
+> 1. Happy path — valid, normal inputs behave correctly.
+> 2. Boundary / edge case — inputs at valid-range limits (empty collections, max/min sizes, exact thresholds).
+> 3. Negative / invalid input — system rejects or gracefully handles invalid input.
 > 4. Error / failure path — system recovers from a downstream failure, missing dependency, or infrastructure fault.
-> 5. Performance — specify: load profile (N concurrent users or req/s), acceptance threshold (e.g. p95 < 2 s, error rate < 1 %), and recommended tool (k6 / wrk / locust).
+> 5. Performance — load profile (N concurrent users or req/s), acceptance threshold (e.g. p95 < 2s, error rate < 1%), recommended tool (k6 / wrk / locust).
 >
-> For every test case use exactly this format:
+> Format each test case exactly as:
 >
 > **TC-[REQ_ID]-[N]**
 > - **Title**: [short imperative phrase]
 > - **Type**: Happy path | Boundary | Negative | Error path | Performance
 > - **Preconditions**: [specific named DB records, config values, mock responses — never "the system is configured correctly"]
-> - **Steps**: [numbered; one action per step; unambiguous subject, e.g. "The test runner calls POST /api/v1/…"]
+> - **Steps**: [numbered, one action per step, unambiguous subject, e.g. "The test runner calls POST /api/v1/…"]
 > - **Expected result**: [exact HTTP status, DB state change, log entry, or UI state — never "returns success"]
 > - **Pass criteria**: [one-line PASS/FAIL condition]
 >
-> Use concrete values throughout. Not "a valid URL" — use the actual example URL. Not "returns an error" — state the exact status code and body shape.
+> Use concrete values throughout — the actual example URL, not "a valid URL"; the exact status code and body shape, not "returns an error".
 
 Store the agent's output as `draft`.
 
@@ -193,33 +186,32 @@ Store the agent's output as `draft`.
 
 Launch a fresh agent with this prompt. Pass only the requirement and `draft` — do not include any generation reasoning or prior context:
 
-> You are a QA lead reviewing test cases written by someone else. Do not write new test cases. Only evaluate the draft provided.
+> You are a QA lead reviewing someone else's test cases. Evaluate only the draft below — do not write new cases.
 >
 > **Requirement**
 > ID: [REQ-ID] — [Title]
-> Description: [full requirement text including acceptance criteria and notes]
+> Description: [full requirement text, including acceptance criteria and notes]
 >
 > **Draft test cases**
 > [draft]
 >
-> **Must pass** — output REVISE if any of these fail:
-> - Happy path, boundary, negative, and error-path types are all present.
-> - Performance type is present if and only if the requirement contains a measurable target; missing with a target defined is a failure; present with no target defined is also a failure.
-> - Every clause of the requirement description and every stated acceptance criterion is covered by at least one test case.
-> - No precondition is vague ("the system is set up correctly" fails this check).
-> - No expected result is vague ("the operation succeeds" fails this check).
-> - All pass criteria are binary PASS/FAIL, not subjective.
+> **Must pass** — REVISE if any fail:
+> - Happy path, boundary, negative, and error-path types are all present
+> - Performance type is present exactly when the requirement states a measurable target — never both-missing-with-target or present-without-target
+> - Every clause of the requirement and every stated acceptance criterion is covered by at least one test case
+> - No vague precondition ("the system is set up correctly") or vague expected result ("the operation succeeds")
+> - All pass criteria are binary PASS/FAIL, not subjective
 >
-> **Should pass** — output REVISE if 2 or more of these fail:
-> - Preconditions name specific data values, not categories.
-> - Steps can be executed by someone unfamiliar with the codebase.
-> - Error-path cases name the exact failure injected (e.g. "mock returns HTTP 503").
-> - Boundary cases state the exact boundary value under test.
-> - Each test case is independent — no test requires another to have run first.
+> **Should pass** — REVISE if 2+ fail:
+> - Preconditions name specific data values, not categories
+> - Steps are executable by someone unfamiliar with the codebase
+> - Error-path cases name the exact failure injected (e.g. "mock returns HTTP 503")
+> - Boundary cases state the exact boundary value under test
+> - Each test case is independent — no test relies on another having run first
 >
 > Output exactly one of:
 > - `APPROVED` (one optional sentence of commentary)
-> - `REVISE:` followed by a numbered list where each item is: `[TC-ID or "missing case"] — [specific problem and exactly what to add or fix]`
+> - `REVISE:` followed by a numbered list: `[TC-ID or "missing case"] — [specific problem and exactly what to add or fix]`
 
 Store the agent's output as `review`.
 
@@ -227,7 +219,7 @@ Store the agent's output as `review`.
 
 Launch a fresh agent with this prompt:
 
-> You are a QA engineer revising test cases based on reviewer feedback. Return the complete revised set — all original test cases with corrections applied, plus any new cases the feedback requires. Use the same format as the original draft.
+> You are a QA engineer revising test cases per reviewer feedback. Return the complete revised set — original cases with corrections applied, plus any new cases the feedback requires — in the original format.
 >
 > **Requirement**
 > ID: [REQ-ID] — [Title]
@@ -239,7 +231,7 @@ Launch a fresh agent with this prompt:
 > **Reviewer feedback**
 > [review]
 >
-> Apply every numbered item in the feedback exactly. Do not add cases beyond what the feedback requires.
+> Apply every numbered feedback item exactly. Add nothing beyond what the feedback requires.
 
 Store the output as `revised_draft`. Then re-run Agent 2 (reviewer) against `revised_draft`.
 
@@ -254,14 +246,14 @@ Store the output as `revised_draft`. Then re-run Agent 2 (reviewer) against `rev
 
 #### Pass 1 — Generator
 
-Draft an implementation task group for the requirement. Write tasks that an AI coding agent can execute without rereading the PRD and without asking the user follow-up questions. Use concrete language and include dependency order, validation gates, acceptance criteria, expected files/modules/interfaces where inferable, and explicit assumptions for any PRD gap. Do not create vague tasks such as "implement backend" or "add tests".
+Draft an implementation task group the AI coding agent can execute without rereading the PRD or asking follow-up questions. Use concrete language: dependency order, validation gates, acceptance criteria, expected files/modules/interfaces where inferable, and explicit assumptions for any PRD gap. No vague tasks like "implement backend" or "add tests".
 
-The implementation plan must be autonomous-execution ready:
-- Do not leave "ask user", "TBD", "decide later", "confirm approach", or unowned discovery as implementation blockers.
-- If the PRD lacks a detail, choose a conservative implementation assumption, label it, and add a verification task that can prove or disprove it without user intervention.
-- Every task must state the concrete output an AI should produce: code, schema migration, API contract, UI state, test, fixture, config, documentation, or rollout change.
-- Every task must include enough context to implement safely: target component/module, input/output contract, data shape, error behavior, permissions, and validation command when applicable.
-- Tasks may reference SDD/Test Plan sections when generated, but must still stand alone if those artifacts are unavailable.
+Make it autonomous-execution ready:
+- No "ask user", "TBD", "decide later", "confirm approach", or unowned discovery as a blocker.
+- Where the PRD lacks a detail, choose a conservative assumption, label it, and add a verification task that proves or disproves it without user intervention.
+- Every task states its concrete output: code, schema migration, API contract, UI state, test, fixture, config, documentation, or rollout change.
+- Every task includes enough context to implement safely: target component/module, input/output contract, data shape, error behavior, permissions, and validation command where applicable.
+- Tasks may reference SDD/Test Plan sections when generated, but must stand alone if those artifacts are unavailable.
 
 Each requirement task group must include:
 
@@ -289,32 +281,28 @@ Each requirement task group must include:
 
 Spawn a subagent using the Agent tool with the following prompt:
 
-> You are a critical engineering manager reviewing an implementation plan task group. Your only job is to find planning gaps — do not rewrite the plan yourself.
+> You are a critical engineering manager reviewing an implementation plan task group. Find planning gaps only — do not rewrite the plan.
 >
-> **Requirement:**
-> [requirement ID, title, full description, and UI Component: Yes/No]
+> **Requirement:** [ID, title, full description, UI Component: Yes/No]
 >
-> **Draft implementation task group:**
-> [full draft text]
->
-> Review against these criteria:
+> **Draft implementation task group:** [full draft text]
 >
 > **Must pass** (flag any failure):
-> - Every material clause of the requirement is represented by at least one task
-> - The task group is suitable for an AI coding agent to implement without user intervention: no "ask user", unowned TBDs, unresolved choices, or vague discovery blockers remain
-> - Missing PRD details are handled with explicit conservative assumptions plus verification tasks, not deferred to the user
-> - Task breakdown is grouped under a sub-heading per Owner Role, with stable task IDs, target files/modules where inferable, dependencies, estimates, acceptance criteria, and validation commands in each role's table
-> - Execution order is coherent and no task depends on work that appears later without being declared
-> - Testing/verification work is explicit and not collapsed into implementation tasks
-> - Release, migration, feature flag, monitoring, rollback, or documentation work is included where relevant, or explicitly marked N/A with a reason
+> - Every material clause of the requirement maps to at least one task
+> - The task group is executable by an AI coding agent without user intervention: no "ask user", unowned TBDs, unresolved choices, or vague discovery blockers
+> - Missing PRD details carry an explicit conservative assumption plus a verification task, not a deferral to the user
+> - Task Breakdown is grouped by Owner Role, with stable task IDs, target files/modules where inferable, dependencies, estimates, acceptance criteria, and validation commands per role table
+> - Execution order is coherent — no task depends on undeclared later work
+> - Testing/verification work is explicit, not folded into implementation tasks
+> - Release, migration, feature flag, monitoring, rollback, and documentation work is present where relevant, or marked N/A with a reason
 > - Risks/blockers have owners and target dates
 >
-> **Should pass** (flag if 2 or more fail):
+> **Should pass** (flag if 2+ fail):
 > - Tasks are small enough to become Jira stories or sub-tasks
-> - Tasks state concrete code/data/config/doc outputs rather than activities
+> - Tasks state concrete code/data/config/doc outputs, not activities
 > - Parallelizable work is identified
-> - Estimates are plausible relative sizes such as S/M/L or day ranges
-> - Cross-artifact references to SDD/Test Plan are included when those artifacts are generated
+> - Estimates are plausible relative sizes (S/M/L or day ranges)
+> - Cross-artifact references to SDD/Test Plan appear when those artifacts are generated
 > - User-facing requirements include frontend, accessibility, and UX verification tasks
 >
 > Respond with exactly one of:
