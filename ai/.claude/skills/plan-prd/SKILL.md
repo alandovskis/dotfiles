@@ -269,7 +269,7 @@ Each requirement task group must include:
 
 **Implementation Strategy** — 1–3 paragraphs explaining sequencing, ownership boundaries, architecture dependencies, and rollout approach.
 
-**Task Breakdown** — table with columns: Task ID | Task | Type | Target Files / Modules | Owner Role | Dependencies | Estimate | Acceptance Criteria | Validation. Task IDs must be stable and requirement-scoped, e.g. `IMP-REQ-001-01`. Types must be one of: Discovery, Backend, Frontend, Data, Infrastructure, Testing, Security, Documentation, Release. Discovery tasks must produce repo-local artifacts or decisions and cannot require user input.
+**Task Breakdown** — grouped under a sub-heading per Owner Role (e.g. `##### Backend Engineer`, `##### Frontend Engineer`, `##### QA Engineer`), in the order roles first appear in the requirement's dependency chain. Within each role's sub-heading, a table with columns: Task ID | Task | Type | Target Files / Modules | Dependencies | Estimate | Acceptance Criteria | Validation, with rows in dependency order. Task IDs must be stable and requirement-scoped, e.g. `IMP-REQ-001-01`. Types must be one of: Discovery, Backend, Frontend, Data, Infrastructure, Testing, Security, Documentation, Release. Discovery tasks must produce repo-local artifacts or decisions and cannot require user input.
 
 **Test Plan Implementation Breakdown** — a separate table that maps the requirement's generated test plan cases to the implementation work needed to support them. Include columns: Test Case ID | Test Objective | Supporting Code / Fixture / Harness Work | Implementation Task IDs | Validation. This table must explicitly cover all generated happy path, boundary, negative, error, and performance cases for the requirement when such cases exist.
 
@@ -303,7 +303,7 @@ Spawn a subagent using the Agent tool with the following prompt:
 > - Every material clause of the requirement is represented by at least one task
 > - The task group is suitable for an AI coding agent to implement without user intervention: no "ask user", unowned TBDs, unresolved choices, or vague discovery blockers remain
 > - Missing PRD details are handled with explicit conservative assumptions plus verification tasks, not deferred to the user
-> - Task breakdown has stable task IDs, target files/modules where inferable, concrete owners by role, dependencies, estimates, acceptance criteria, and validation commands
+> - Task breakdown is grouped under a sub-heading per Owner Role, with stable task IDs, target files/modules where inferable, dependencies, estimates, acceptance criteria, and validation commands in each role's table
 > - Execution order is coherent and no task depends on work that appears later without being declared
 > - Testing/verification work is explicit and not collapsed into implementation tasks
 > - Release, migration, feature flag, monitoring, rollback, or documentation work is included where relevant, or explicitly marked N/A with a reason
@@ -497,9 +497,22 @@ Combine all task groups into one document:
 [Mermaid dependency graph when useful; otherwise a table of dependency relationships]
 
 ## Task Summary
-| Task ID | Requirement | Task | Type | Target Files / Modules | Owner Role | Dependencies | Estimate | Acceptance Criteria | Validation | Status |
-|---------|-------------|------|------|------------------------|------------|--------------|----------|---------------------|------------|--------|
-| IMP-REQ-001-01 | REQ-001 | ... | Backend | src/... | Backend Engineer | — | M | ... | ... | Draft |
+Grouped first by requirement, then by Owner Role within each requirement (same grouping and row order as each requirement's Task Breakdown in Step 5C):
+
+### REQ-001 — [Title]
+
+##### Backend Engineer
+| Task ID | Task | Type | Target Files / Modules | Dependencies | Estimate | Acceptance Criteria | Validation | Status |
+|---------|------|------|------------------------|--------------|----------|---------------------|------------|--------|
+| IMP-REQ-001-01 | ... | Backend | src/... | — | M | ... | ... | Draft |
+
+##### Frontend Engineer
+| Task ID | Task | Type | Target Files / Modules | Dependencies | Estimate | Acceptance Criteria | Validation | Status |
+|---------|------|------|------------------------|--------------|----------|---------------------|------------|--------|
+| IMP-REQ-001-02 | ... | Frontend | src/... | IMP-REQ-001-01 | S | ... | ... | Draft |
+
+### REQ-002 — [Title]
+...
 
 ---
 [REQ-001 implementation task group]
