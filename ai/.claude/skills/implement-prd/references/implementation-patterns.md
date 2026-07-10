@@ -1,7 +1,8 @@
 # Implementation Patterns
 
-Reference patterns for common SDD constructs by language/stack. Consult this file
-when the generator pass needs to match project conventions for a specific technology.
+Reference patterns for common Implementation Plan task constructs by language/stack.
+Consult this file when the generator pass needs to match project conventions for
+a specific technology.
 
 ---
 
@@ -24,8 +25,8 @@ async fn register_handler(
 }
 ```
 
-SDD error table mapping (Axum):
-| SDD condition | StatusCode |
+Acceptance-criteria error mapping (Axum):
+| Condition | StatusCode |
 |---|---|
 | invalid input | `StatusCode::BAD_REQUEST` (400) |
 | unauthorized | `StatusCode::UNAUTHORIZED` (401) |
@@ -285,10 +286,10 @@ Standardise across the project so tests can assert consistently:
 
 ```json
 {
-  "error": "EMAIL_TAKEN",        // machine-readable code from SDD error table
+  "error": "EMAIL_TAKEN",        // machine-readable code from the task's Acceptance Criteria
   "message": "Email already registered",  // human-readable
   "details": []                  // optional validation issue list
 }
 ```
 
-Map SDD "User-Facing Message" column to `message`. Map SDD "Error Code" column to `error`.
+Map the task's user-facing message text to `message`. Map the task's error code to `error`.

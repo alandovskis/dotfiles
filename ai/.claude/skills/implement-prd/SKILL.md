@@ -1,19 +1,21 @@
 ---
 name: implement-prd
 description: |-
-  Reads a Software Design Document (SDD) and Test Plan from Confluence and
-  implements the described system test-first using two planner-generator-reviewer
-  loops: Loop A turns the test plan into executable code; Loop B implements the
-  SDD gated by unit tests and integration tests. Trigger when user says:
-  "implement from SDD", "implement the SDD from Confluence", "code up this design
-  doc", "build from the software design document", "implement a Confluence SDD",
-  "/implement-prd", or asks to turn a design document into working code
-  and verify it with tests.
+  Reads an autonomous Implementation Plan from Confluence — the artifact produced
+  by /plan-prd — and implements the described system test-first using two
+  planner-generator-reviewer loops: Loop A turns the plan's Test Plan
+  Implementation Breakdown into executable tests; Loop B implements the Task
+  Breakdown gated by unit tests and integration tests. The Implementation Plan
+  is the only input; this skill does not read the SDD or Test Plan documents.
+  Trigger when user says: "implement the implementation plan", "implement from
+  the implementation plan", "code up this implementation plan", "build from the
+  Confluence implementation plan", "/implement-prd", or asks to turn an
+  implementation plan into working code and verify it with tests.
 ---
 
-Implement production code from a Confluence Software Design Document (SDD) test-first. Start by launching **two parallel planner-generator-reviewer loops**: Loop A implements the test plan as executable code; Loop B implements the SDD, gated by unit tests and integration tests. Follow these steps precisely.
+Implement production code from a Confluence Implementation Plan test-first. The Implementation Plan is the **only** input — do not fetch or depend on the SDD or Test Plan documents that may have been generated alongside it; the Implementation Plan is designed to stand alone. Start by launching **two parallel planner-generator-reviewer loops**: Loop A implements the plan's Test Plan Implementation Breakdown as executable code; Loop B implements the Task Breakdown, gated by unit tests and integration tests. Follow these steps precisely.
 
-> **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If you cannot fully implement a component because the SDD is ambiguous or a dependency is missing, stop, surface the blocker explicitly, and ask the user before continuing. A partial implementation that compiles is worse than a clear gap report.
+> **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If you cannot fully implement a task because the Implementation Plan is ambiguous or a dependency is missing, stop, surface the blocker explicitly, and ask the user before continuing. A partial implementation that compiles is worse than a clear gap report.
 
 > **Don't do — xfail markers.** Never mark tests with `@pytest.mark.xfail`, `test.failing`, `xit`, `xtest`, or any other expected-failure decorator or mechanism. Tests in Loop A must fail outright (not xfail) because they exercise production code that does not yet exist; tests in Loop B must pass. Masking failures with xfail hides real gaps and defeats the test gate.
 
@@ -51,69 +53,69 @@ Remove this hook entry in Step 6 after the summary report is complete.
 If the user has not already provided the following, use AskUserQuestion to ask:
 
 1. **Target directory** — local path where code will be written (default: current working directory)
-2. **Language / stack** — if not specified in the SDD, ask which language/framework to use
+2. **Language / stack** — if not inferable from the Implementation Plan's Target Files / Modules columns, ask which language/framework to use
 
-Do not ask for the SDD or test plan sources — you will look them up from Confluence in Step 2.
+Do not ask for the Implementation Plan source — you will look it up from Confluence in Step 2. Do not ask about or reference an SDD or Test Plan document.
 
-## Step 2: Resolve cloud ID, fetch SDD and test plan
+## Step 2: Resolve cloud ID, fetch the Implementation Plan
 
 **2a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-**2b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter. Present every returned space to the user via AskUserQuestion and ask them to choose the one containing both the SDD and the test plan.
+**2b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter. Present every returned space to the user via AskUserQuestion and ask them to choose the one containing the Implementation Plan.
 
-**2c. Choose both pages** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. If there are more pages than fit in one response, paginate until all are listed. Present the full page list once and ask the user to identify:
-- Which page is the **SDD** (title typically "SDD: …")
-- Which page is the **Test Plan** (title typically "Test Plan: …")
+**2c. Choose the page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. If there are more pages than fit in one response, paginate until all are listed. Present the full page list and ask the user to identify the **Implementation Plan** page (title typically "Implementation Plan: …"). Do not ask about SDD or Test Plan pages.
 
-**2d. Fetch both pages** — call `getConfluencePage` for the SDD page and for the test plan page in parallel, both with `contentFormat: "markdown"`.
+**2d. Fetch the page** — call `getConfluencePage` for the Implementation Plan page with `contentFormat: "markdown"`.
 
-## Step 3: Extract components and test cases
+## Step 3: Extract tasks and test objectives
 
-**From the SDD**, parse implementable units:
-- **API endpoints** — method, path, request/response schema, auth
-- **Data models / schema** — tables, fields, constraints, indexes, migration strategy
-- **Service / module definitions** — class/function responsibilities, interfaces
-- **Background jobs / workers** — triggers, payloads, failure handling
-- **Configuration** — environment variables, feature flags
+Parse the Implementation Plan document for these sections (as produced by /plan-prd):
 
-For each component record: **ID** (COMP-001…), **Name**, **Type** (api | model | service | job | config), **Specification** (full relevant SDD text).
+**From the Task Summary / Task Breakdown table(s)**, parse implementable units. For each row record: **Task ID** (as given, e.g. `IMP-REQ-001-01`), **Requirement** (if present), **Task** (description), **Type** (Discovery | Backend | Frontend | Data | Infrastructure | Testing | Security | Documentation | Release), **Target Files / Modules**, **Owner Role**, **Dependencies**, **Acceptance Criteria**, **Validation**.
 
-Detect **dependency order**: data models before services, services before API handlers.
+**From the Execution Order section**, record the dependency-ordered task ID sequence and any milestone groupings. Use this as the authoritative build order, cross-checked against the Dependencies column.
 
-**From the test plan**, parse test cases grouped by requirement. For each test case record: **ID** (TC-REQ0XX-N), **Type** (Happy path | Boundary | Negative | Error path | Performance), **Preconditions**, **Steps**, **Pass criteria**.
+**From the Parallelizable Work section**, record which task IDs may be implemented concurrently and what shared interfaces/contracts must be agreed first.
+
+**From the Test Plan Implementation Breakdown section**, parse test objectives. For each row record: **Test Case ID** (e.g. `TC-REQ001-1`), **Test Objective**, **Supporting Code / Fixture / Harness Work**, **Implementation Task IDs** (the Task IDs it depends on / verifies), **Validation**.
+
+**From the Autonomous Execution Contract section**, record: repository discovery commands, validation commands (unit, integration, lint, typecheck, migration, smoke-test), feature flags/config/env vars, and the fallback rule for missing optional context.
+
+**From the Release Plan section**, record migration, feature-flag, backfill, rollout, monitoring, rollback, and documentation tasks not already captured as `Release`-type rows in the Task Breakdown.
 
 Present a summary to the user and confirm before proceeding:
 
-> "Found [N] SDD components and [M] test cases. Shall I implement both in [target directory]?"
+> "Found [N] tasks across [M] requirements and [K] test objectives. Shall I implement both in [target directory]?"
 
 ---
 
-## Step 4: Loop A — Implement the test plan as executable code
+## Step 4: Loop A — Implement the Test Plan Implementation Breakdown as executable code
 
-Loop A runs a full **planner → generator → reviewer** cycle to turn the Confluence test plan into a runnable test suite. Run this loop completely before starting Loop B.
+Loop A runs a full **planner → generator → reviewer** cycle to turn the plan's Test Plan Implementation Breakdown into a runnable test suite. Run this loop completely before starting Loop B.
 
 ### A1 — Planner
 
 Produce a test implementation plan:
 - **Test file map** — one file per requirement group (e.g. `tests/test_req001_fetch.py`), paths relative to target directory
-- **Fixture catalogue** — shared DB seed data, mock factories, helper functions, and the file each lives in
+- **Fixture catalogue** — derived from each row's Supporting Code / Fixture / Harness Work column: shared DB seed data, mock factories, helper functions, and the file each lives in
 - **Test runner setup** — config files needed (`pytest.ini`, `jest.config.js`, `docker-compose.test.yml`)
-- **Existing code audit** — read the target directory for any existing test infrastructure to reuse
+- **Existing code audit** — read the target directory for any existing test infrastructure to reuse, using the repository discovery commands from the Autonomous Execution Contract
 
 Summarise the plan in ≤10 lines, then proceed without waiting.
 
 ### A2 — Generator (per requirement group)
 
-For each requirement's test cases:
+For each requirement's test objectives:
 
 1. Read any existing test helpers or fixtures that these tests will reuse.
-2. Write executable test code that directly implements each TC exactly as specified: preconditions as test setup, steps as test body, pass criteria as assertions.
-3. Each test must:
+2. Build the Supporting Code / Fixture / Harness Work described for each Test Case ID first.
+3. Write executable test code that implements the Test Objective, using the Validation column as the pass condition. Since the Implementation Plan does not carry full preconditions/steps text, infer concrete setup and steps from the Test Objective, the linked Implementation Task IDs' Acceptance Criteria, and the Supporting Code / Fixture / Harness Work description — do not leave any inferred value vague (name concrete inputs, statuses, error codes).
+4. Each test must:
    - Assert **observable output only** — HTTP status codes, response bodies, DB state — not implementation internals
    - Be **independent** — no shared mutable state between tests
-   - Be named after the TC ID and title (e.g. `test_TC_REQ001_1_fetch_toronto_minutes`)
+   - Be named after the Test Case ID and objective (e.g. `test_TC_REQ001_1_fetch_toronto_minutes`)
    - Import only interfaces and paths from the file map; use stubs for production code that does not yet exist
-4. Write minimal production stubs (functions returning 501 / empty) so the suite compiles.
+5. Write minimal production stubs (functions returning 501 / empty) so the suite compiles.
 
 Log: `"Loop A — written tests for REQ-00X: [file path]"`.
 
@@ -121,28 +123,28 @@ Log: `"Loop A — written tests for REQ-00X: [file path]"`.
 
 Spawn a fresh subagent (not a fork) via the Agent tool with this prompt:
 
-> You are a QA lead verifying that test code faithfully implements a structured test plan. Do not rewrite tests — only flag gaps.
+> You are a QA lead verifying that test code faithfully implements a Test Plan Implementation Breakdown. Do not rewrite tests — only flag gaps.
 >
 > **Requirement:** [REQ-ID] — [Title]
 >
-> **Test plan cases:**
-> [full TC text from the test plan for this requirement group]
+> **Test Plan Implementation Breakdown rows for this requirement:**
+> [full Test Case ID | Test Objective | Supporting Code / Fixture / Harness Work | Implementation Task IDs | Validation rows]
 >
 > **Generated test code:**
 > [full content of the test file(s) for this requirement group]
 >
 > **Must pass** (flag any failure):
-> - Every TC in the test plan has a corresponding test function
-> - Preconditions are established in test setup (fixtures, DB seeds, mock responses)
-> - Steps are executed in order in the test body
-> - Pass criteria are directly encoded as assertions (not paraphrased)
+> - Every Test Case ID in the breakdown has a corresponding test function
+> - The Supporting Code / Fixture / Harness Work described for each row is present (fixtures, DB seeds, mock responses)
+> - The test body exercises the stated Test Objective
+> - The Validation column's condition is directly encoded as an assertion (not paraphrased)
 > - No test passes trivially (no empty assertion, no `assert True`)
 >
 > **Should pass** (flag if 2 or more fail):
-> - Test names include the TC ID
-> - Assertions use exact values from the test plan (status codes, error codes, SQL results)
-> - Error-path tests inject the exact failure described (e.g. TCP port blocked, mock raises 503)
-> - Performance tests assert the stated threshold (latency, count, ratio)
+> - Test names include the Test Case ID
+> - Assertions use concrete values (status codes, error codes, DB results) rather than vague categories
+> - Tests linked to Implementation Task IDs of type Testing/Security/Data reflect that task's Acceptance Criteria
+> - Performance-oriented rows assert a stated threshold (latency, count, ratio) when one is implied by the Validation column
 >
 > Respond with exactly one of:
 > - `APPROVED`
@@ -156,51 +158,57 @@ After all requirement groups are written and reviewed, run the test suite once. 
 
 ---
 
-## Step 5: Loop B — Implement the SDD as production code
+## Step 5: Loop B — Implement the Task Breakdown as production code
 
-Loop B runs a full **planner → generator → reviewer** cycle to implement each SDD component. The approval gate for each component is: **the reviewer approves AND the component's unit tests AND integration tests all pass**. Start Loop B after Loop A completes.
+Loop B runs a full **planner → generator → reviewer** cycle to implement each task from the Task Breakdown. The approval gate for each task is: **the reviewer approves AND the task's unit tests AND integration tests all pass**. Start Loop B after Loop A completes.
 
 ### B1 — Planner
 
 Produce a production implementation plan:
-- **File map** — for each component: files to create or modify, paths relative to target directory
-- **Interface contracts** — function signatures, class interfaces, or type definitions that cross component boundaries
-- **Build order** — strict dependency sequence (models → repositories → services → handlers → routes)
+- **File map** — for each task: files to create or modify, taken from its Target Files / Modules column, paths relative to target directory
+- **Interface contracts** — function signatures, class interfaces, or type definitions that cross task boundaries, inferred from Acceptance Criteria and Parallelizable Work's shared-interface notes
+- **Build order** — the Execution Order sequence from Step 3, validated against each task's Dependencies column (models/data tasks → services/backend tasks → frontend/handlers → release tasks)
 - **Existing code audit** — read the target directory; identify files already present that the plan must integrate with rather than replace
-- **Unit test file map** — one unit test file per service/module component (e.g. `tests/unit/test_status_normaliser.py`); these are written by Loop B and test individual functions in isolation
-- **Integration test file map** — one integration test file per subsystem boundary (e.g. `tests/integration/test_fetch_pipeline.py`); these test component interactions against a real DB or queue
+- **Unit test file map** — one unit test file per Backend/Frontend/Data task (e.g. `tests/unit/test_status_normaliser.py`); these are written by Loop B and test individual functions in isolation
+- **Integration test file map** — one integration test file per subsystem boundary implied by task Dependencies (e.g. `tests/integration/test_fetch_pipeline.py`); these test task interactions against a real DB or queue
 
 Summarise the plan in ≤15 lines, then proceed without waiting.
 
-### B2 — Generator (per component, in dependency order)
+### B2 — Generator (per task, in Execution Order)
 
-For each component:
+For each task:
 
-1. Read existing files this component extends or depends on before writing.
-2. Write unit tests for this component's functions/methods in isolation (mock all external I/O). Each unit test must:
-   - Cover the happy path and all error conditions from the SDD error table
+1. Read existing files this task extends or depends on before writing.
+2. Write unit tests for this task's functions/methods in isolation (mock all external I/O). Each unit test must:
+   - Cover the happy path and every error condition implied by the task's Acceptance Criteria and Validation columns
    - Assert exact return values, raised exceptions, or emitted log entries
-3. Write integration tests for this component's interactions (real DB, real queue, mocked external APIs). Each integration test must:
+3. Write integration tests for this task's interactions (real DB, real queue, mocked external APIs). Each integration test must:
    - Establish real DB state (seed rows, not mocks)
    - Assert DB state changes, not just return values
 4. Write complete, production-ready implementation code:
    - Match the project's naming conventions, import style, error handling idioms
-   - Implement **all** SDD-specified behaviour — no stubs, TODOs, or placeholders
-   - Include only types, functions, and exports the SDD requires
-5. Remove any stubs written in Loop A for this component.
+   - Implement **all** behaviour required by the task's Acceptance Criteria — no stubs, TODOs, or placeholders
+   - For `Discovery` tasks, produce the repo-local artifact or decision the task specifies (not code) and record it where later tasks can reference it
+   - For `Release` tasks, implement the migration/flag/rollout/rollback work described, following the Release Plan
+   - Include only types, functions, and exports the task requires
+5. Run the task's Validation command (if one is specified) and confirm it passes before marking the task done.
+6. Remove any stubs written in Loop A for this task.
 
-Log: `"Loop B — implemented COMP-00X: [Name]"`.
+Log: `"Loop B — implemented [Task ID]: [Task]"`.
 
-### B3 — Reviewer (subagent, per component)
+### B3 — Reviewer (subagent, per task)
 
 Spawn a fresh subagent via the Agent tool with this prompt:
 
-> You are a critical senior engineer reviewing an implementation against its SDD specification. Find gaps only — do not rewrite code yourself.
+> You are a critical senior engineer reviewing an implementation against its Implementation Plan task specification. Find gaps only — do not rewrite code yourself.
 >
-> **Component:** [ID] [Name] ([Type])
+> **Task:** [Task ID] [Task] ([Type])
 >
-> **SDD specification:**
-> [full relevant SDD text for this component]
+> **Task specification:**
+> Target Files / Modules: [...]
+> Dependencies: [...]
+> Acceptance Criteria: [...]
+> Validation: [...]
 >
 > **Files implemented:**
 > [list of production file paths]
@@ -215,20 +223,19 @@ Spawn a fresh subagent via the Agent tool with this prompt:
 > [full content of each written file]
 >
 > **Must pass** (flag any failure):
-> - Every SDD-specified field, endpoint, method, or behaviour is present
+> - Every clause of the Acceptance Criteria is met
 > - No stubs remain: scan every production file for `pass`, `TODO`, `FIXME`, `raise NotImplementedError`, `return 501`, empty function bodies, and placeholder strings like `"not implemented"` — flag each occurrence with file and line number
-> - Error handling matches SDD error table (correct HTTP status codes and error codes)
-> - Security rules from SDD enforced (auth checks, input validation, PII handling)
-> - Unit tests cover every function's happy path and all SDD-listed error conditions
-> - Integration tests cover every cross-boundary interaction (DB writes, queue events)
+> - Error handling matches what the Acceptance Criteria / Validation implies (correct HTTP status codes and error codes where applicable)
+> - Security-relevant Acceptance Criteria enforced (auth checks, input validation, PII handling) when the task Type is Security or the criteria mention it
+> - Unit tests cover every function's happy path and all error conditions implied by the Acceptance Criteria
+> - Integration tests cover every cross-boundary interaction (DB writes, queue events) implied by the Dependencies column
 > - No regressions: pre-existing interfaces in modified files are unchanged
 >
 > **Should pass** (flag if 2 or more fail):
-> - Naming matches SDD exactly (table names, field names, endpoint paths)
-> - Response shapes match SDD schema
-> - Constraints and indexes from SDD data model are present
-> - Auth/authz enforced at the correct layer
+> - Naming matches the Target Files / Modules column exactly
+> - The task's Validation command, when run, would pass against this implementation
 > - Integration tests use real DB state, not mocks
+> - Discovery/Release task outputs are recorded in a form later tasks can consume without re-asking the user
 >
 > Respond with exactly one of:
 > - `APPROVED`
@@ -236,36 +243,37 @@ Spawn a fresh subagent via the Agent tool with this prompt:
 
 Wait for the subagent verdict.
 
-### B4 — Test gate (per component)
+### B4 — Test gate (per task)
 
-After the reviewer approves, run the component's unit tests and integration tests:
+After the reviewer approves, run the task's unit tests and integration tests:
 
-Detect the test commands from:
-1. `package.json` scripts (`test:unit`, `test:integration`)
-2. `Makefile` targets (`make test-unit`, `make test-integration`)
-3. Language defaults with path filters (`pytest tests/unit/test_comp.py`, `go test ./internal/comp/...`)
+Detect the test commands from, in order of priority:
+1. The task's own Validation column (if it names a runnable command)
+2. `package.json` scripts (`test:unit`, `test:integration`)
+3. `Makefile` targets (`make test-unit`, `make test-integration`)
+4. Language defaults with path filters (`pytest tests/unit/test_task.py`, `go test ./internal/task/...`)
 
 If services are required (DB, queue), check `docker-compose.yml` and start them via Bash before running.
 
-**The component is not complete until both unit tests AND integration tests pass.** For any failing test:
+**The task is not complete until both unit tests AND integration tests pass.** For any failing test:
 1. Read the failing test and the implementation file it exercises
-2. Fix the implementation if the SDD backs the expected behaviour
-3. Fix the test only if the assertion is wrong relative to the SDD
+2. Fix the implementation if the task's Acceptance Criteria backs the expected behaviour
+3. Fix the test only if the assertion is wrong relative to the Acceptance Criteria
 4. Re-run after each fix; never batch multiple fixes before re-running
 
 Stop after 3 fix-and-rerun cycles per failing test; mark it `⚠️ Test unresolved` with the error output.
 
-If the reviewer returned `REVISE:`: apply every cited gap, re-run the reviewer once. After the second review, if still `REVISE:`: mark the component `⚠️ Needs Human Review: [outstanding issues]` and continue. Maximum 2 revision rounds — never loop further.
+If the reviewer returned `REVISE:`: apply every cited gap, re-run the reviewer once. After the second review, if still `REVISE:`: mark the task `⚠️ Needs Human Review: [outstanding issues]` and continue. Maximum 2 revision rounds — never loop further.
 
-Log: `"After COMP-00X: unit [P]/[F], integration [P]/[F]"`.
+Log: `"After [Task ID]: unit [P]/[F], integration [P]/[F]"`.
 
 ### B5 — Full system test run
 
-After all components complete Loop B, run the full test suite from Loop A (system tests) against the completed production code:
+After all tasks complete Loop B, run the full test suite from Loop A (system tests) against the completed production code:
 
 For any system test that fails:
 1. Determine whether the failure is in the test code (Loop A output) or the production code (Loop B output)
-2. Fix whichever is wrong relative to the test plan / SDD
+2. Fix whichever is wrong relative to the Test Plan Implementation Breakdown / Task Breakdown
 3. Re-run after each fix
 
 Stop after 3 fix-and-rerun cycles per failing system test; mark it `⚠️ System test unresolved`.
@@ -283,59 +291,60 @@ Present a concise implementation report:
 ```
 ## Implementation complete
 
-**Source SDD:** [Confluence link]
-**Source Test Plan:** [Confluence link]
+**Source Implementation Plan:** [Confluence link]
 **Target directory:** [path]
 
-### Loop A — Test plan implementation
+### Loop A — Test Plan Implementation Breakdown
 
-[N] test cases from test plan → [N] executable tests written across [F] files.
+[N] test objectives → [N] executable tests written across [F] files.
 Loop A result: [N] compiled, all failing before production code (expected).
 
-### Loop B — SDD implementation
+### Loop B — Task Breakdown implementation
 
-| ID | Name | Type | Unit | Integration | Status | Files |
-|----|------|------|------|-------------|--------|-------|
-| COMP-001 | accounts table | model | 4/4 | 2/2 | ✅ | db/schema.sql |
-| COMP-002 | StatusNormaliser | service | 7/7 | 3/3 | ✅ | src/normaliser.py |
-| COMP-003 | POST /timeline | api | 5/5 | 4/4 | ⚠️ Needs Human Review | src/routes/timeline.py |
+| Task ID | Task | Type | Unit | Integration | Status | Files |
+|---------|------|------|------|-------------|--------|-------|
+| IMP-REQ-001-01 | accounts table migration | Data | 4/4 | 2/2 | ✅ | db/schema.sql |
+| IMP-REQ-001-02 | StatusNormaliser | Backend | 7/7 | 3/3 | ✅ | src/normaliser.py |
+| IMP-REQ-002-01 | POST /timeline | Backend | 5/5 | 4/4 | ⚠️ Needs Human Review | src/routes/timeline.py |
 
 ### System tests (Loop A suite against Loop B production code)
 
 **Final:** [P] passing / [F] failing
 
-| TC ID | Requirement | Type | Status |
-|-------|-------------|------|--------|
-| TC-REQ001-1 | Fetch | Happy path | ✅ |
-| TC-REQ001-4 | Fetch | Error path | ✅ |
-| TC-REQ003-5 | Extraction | Performance | ⚠️ System test unresolved |
+| Test Case ID | Requirement | Status |
+|-------|-------------|--------|
+| TC-REQ001-1 | REQ-001 | ✅ |
+| TC-REQ001-4 | REQ-001 | ✅ |
+| TC-REQ003-5 | REQ-003 | ⚠️ System test unresolved |
 
 ### Outstanding issues
-- COMP-003: [specific gap from reviewer]
+- IMP-REQ-002-01: [specific gap from reviewer]
 - TC-REQ003-5: [error output]
 
 ### Next steps
 - [ ] Resolve ⚠️ items above
 - [ ] Wire up to CI pipeline (unit, integration, system test stages)
-- [ ] Add load / performance test infrastructure if SDD specifies throughput targets
+- [ ] Complete Release Plan tasks (migrations, flags, rollout, monitoring) if not yet executed
 ```
 
 ---
 
 ## Edge cases
 
-**No test plan page found**: if no "Test Plan: …" page exists in the space, run Loop A against test scenarios derived from the SDD's Testing sections and error tables; note the gap and flag the output as needing review against a formal test plan.
+**No Test Plan Implementation Breakdown section found**: derive test scaffolding directly from each task's Acceptance Criteria and Validation columns instead; note the gap and flag Loop A output as needing review against a formal test breakdown.
 
-**SDD with no Testing section**: Loop B derives unit and integration tests from API specs and error tables only; note the gap.
+**No Task Breakdown / Task Summary table found**: the Implementation Plan is unusable as the sole input — stop and tell the user the page does not contain a Task Breakdown, and ask them to confirm they selected the correct Confluence page.
 
-**Monorepo / multi-service SDD**: ask the user which service(s) to implement; scope both loops to those only.
+**Task Breakdown has no Testing-type rows**: derive unit and integration tests from each task's Acceptance Criteria and Validation columns only; note the gap.
 
-**SDD specifying infrastructure (Docker, Terraform, CI)**: implement config files in Loop B following the same generator → reviewer loop; verify by linting (`terraform validate`, `docker build`, `yamllint`) rather than unit/integration tests; Loop A skips pure-infra components.
+**Monorepo / multi-service plan**: ask the user which requirement group(s) / milestone(s) to implement; scope both loops to those only.
 
-**Conflicting SDD and existing code**: surface the conflict explicitly, ask the user which takes precedence before writing.
+**Task specifying infrastructure (Docker, Terraform, CI)**: implement config files in Loop B following the same generator → reviewer loop; verify by linting (`terraform validate`, `docker build`, `yamllint`) rather than unit/integration tests; Loop A skips pure-infra tasks.
 
-**Large SDD (10+ components)**: process Loop B in batches of 5, report progress after each batch, and confirm before continuing. Loop A processes all test groups up front.
+**Conflicting Implementation Plan and existing code**: surface the conflict explicitly, ask the user which takes precedence before writing.
+
+**Large plan (10+ tasks)**: process Loop B in batches of 5 following the Execution Order, report progress after each batch, and confirm before continuing. Loop A processes all test objective groups up front.
 
 ## Additional resources
 
-- **`references/implementation-patterns.md`** — language-specific patterns for common SDD constructs (REST handlers, ORMs, auth middleware, migrations)
+- **`references/implementation-patterns.md`** — language-specific patterns for common task-specification constructs (REST handlers, ORMs, auth middleware, migrations)
