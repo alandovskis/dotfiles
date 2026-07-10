@@ -13,11 +13,11 @@ description: |-
   implementation plan into working code and verify it with tests.
 ---
 
-Implement production code from a Confluence Implementation Plan test-first. The Implementation Plan is the **only** input — do not fetch or depend on the SDD or Test Plan documents that may have been generated alongside it; the Implementation Plan is designed to stand alone. Start by launching **two parallel planner-generator-reviewer loops**: Loop A implements the plan's Test Plan Implementation Breakdown as executable code; Loop B implements the Task Breakdown, gated by unit tests and integration tests. Follow these steps precisely.
+Implement production code from a Confluence Implementation Plan, test-first. It is the **only** input — the plan is designed to stand alone, so don't fetch or depend on any SDD or Test Plan generated alongside it. Launch **two parallel planner-generator-reviewer loops**: Loop A implements the plan's Test Plan Implementation Breakdown as executable code; Loop B implements the Task Breakdown, gated by unit and integration tests. Follow these steps precisely.
 
-> **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If you cannot fully implement a task because the Implementation Plan is ambiguous or a dependency is missing, stop, surface the blocker explicitly, and ask the user before continuing. A partial implementation that compiles is worse than a clear gap report.
+> **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If a task can't be fully implemented because the plan is ambiguous or a dependency is missing, stop and surface the blocker instead of shipping a partial implementation that merely compiles.
 
-> **Don't do — xfail markers.** Never mark tests with `@pytest.mark.xfail`, `test.failing`, `xit`, `xtest`, or any other expected-failure decorator or mechanism. Tests in Loop A must fail outright (not xfail) because they exercise production code that does not yet exist; tests in Loop B must pass. Masking failures with xfail hides real gaps and defeats the test gate.
+> **Don't do — xfail markers.** Never use `@pytest.mark.xfail`, `test.failing`, `xit`, `xtest`, or any other expected-failure mechanism. Loop A tests must fail outright, not xfail, because they exercise production code that doesn't exist yet; Loop B tests must pass. xfail masks real gaps and defeats the test gate.
 
 ## Step 0: Register a Stop hook
 
@@ -71,7 +71,7 @@ Do not ask for the Implementation Plan source — you will look it up from Confl
 
 Parse the Implementation Plan document for these sections (as produced by /plan-prd):
 
-**From the Task Summary / Task Breakdown tables**, parse implementable units. Tables are grouped first by requirement (a `### REQ-...` sub-heading), then by Owner Role within each requirement (a `##### [Role]` sub-heading, e.g. Backend Engineer, Frontend Engineer, QA Engineer). For each row record: **Task ID** (as given, e.g. `IMP-REQ-001-01`), **Requirement** (from the enclosing requirement heading), **Owner Role** (from the enclosing role heading), **Task** (description), **Type** (Discovery | Backend | Frontend | Data | Infrastructure | Testing | Security | Documentation | Release), **Target Files / Modules**, **Dependencies**, **Acceptance Criteria**, **Validation**. Preserve the requirement-then-role grouping when presenting or batching tasks — do not flatten or re-sort it, though the Execution Order section (not this grouping) remains authoritative for build sequencing.
+**From the Task Summary / Task Breakdown tables**, parse implementable units. Tables are grouped first by requirement (`### REQ-...`), then by Owner Role within each requirement (`##### [Role]`, e.g. Backend Engineer, Frontend Engineer, QA Engineer). For each row record: **Task ID** (e.g. `IMP-REQ-001-01`), **Requirement** and **Owner Role** (from the enclosing headings), **Task**, **Type** (Discovery | Backend | Frontend | Data | Infrastructure | Testing | Security | Documentation | Release), **Target Files / Modules**, **Dependencies**, **Acceptance Criteria**, **Validation**. Preserve this grouping when presenting or batching tasks — the Execution Order section, not this grouping, is authoritative for build sequencing.
 
 **From the Execution Order section**, record the dependency-ordered task ID sequence and any milestone groupings. Use this as the authoritative build order, cross-checked against the Dependencies column.
 
@@ -141,9 +141,9 @@ Summarise the plan in ≤10 lines, then proceed without waiting.
 
 For each requirement's test objectives:
 
-1. Read any existing test helpers or fixtures that these tests will reuse.
-2. Build the Supporting Code / Fixture / Harness Work described for each Test Case ID first.
-3. Write executable test code that implements the Test Objective, using the Validation column as the pass condition. Since the Implementation Plan does not carry full preconditions/steps text, infer concrete setup and steps from the Test Objective, the linked Implementation Task IDs' Acceptance Criteria, and the Supporting Code / Fixture / Harness Work description — do not leave any inferred value vague (name concrete inputs, statuses, error codes).
+1. Read any existing test helpers or fixtures these tests will reuse.
+2. Build the Supporting Code / Fixture / Harness Work for each Test Case ID first.
+3. Write executable test code implementing the Test Objective, using the Validation column as the pass condition. The plan carries no full preconditions/steps text, so infer concrete setup and steps from the Test Objective, the linked Implementation Task IDs' Acceptance Criteria, and the Supporting Code / Fixture / Harness Work — name concrete inputs, statuses, and error codes; leave nothing vague.
 4. Each test must:
    - Assert **observable output only** — HTTP status codes, response bodies, DB state — not implementation internals
    - Be **independent** — no shared mutable state between tests
@@ -157,28 +157,26 @@ Log: `"Loop A — written tests for REQ-00X: [file path]"`.
 
 Spawn a fresh subagent (not a fork) via the Agent tool with this prompt:
 
-> You are a QA lead verifying that test code faithfully implements a Test Plan Implementation Breakdown. Do not rewrite tests — only flag gaps.
+> You are a QA lead verifying test code against a Test Plan Implementation Breakdown. Flag gaps only — do not rewrite tests.
 >
 > **Requirement:** [REQ-ID] — [Title]
 >
-> **Test Plan Implementation Breakdown rows for this requirement:**
-> [full Test Case ID | Test Objective | Supporting Code / Fixture / Harness Work | Implementation Task IDs | Validation rows]
+> **Test Plan Implementation Breakdown rows for this requirement:** [full Test Case ID | Test Objective | Supporting Code / Fixture / Harness Work | Implementation Task IDs | Validation rows]
 >
-> **Generated test code:**
-> [full content of the test file(s) for this requirement group]
+> **Generated test code:** [full content of the test file(s) for this requirement group]
 >
 > **Must pass** (flag any failure):
-> - Every Test Case ID in the breakdown has a corresponding test function
-> - The Supporting Code / Fixture / Harness Work described for each row is present (fixtures, DB seeds, mock responses)
+> - Every Test Case ID has a corresponding test function
+> - The row's Supporting Code / Fixture / Harness Work is present (fixtures, DB seeds, mock responses)
 > - The test body exercises the stated Test Objective
-> - The Validation column's condition is directly encoded as an assertion (not paraphrased)
+> - The Validation column's condition is directly encoded as an assertion, not paraphrased
 > - No test passes trivially (no empty assertion, no `assert True`)
 >
-> **Should pass** (flag if 2 or more fail):
+> **Should pass** (flag if 2+ fail):
 > - Test names include the Test Case ID
-> - Assertions use concrete values (status codes, error codes, DB results) rather than vague categories
-> - Tests linked to Implementation Task IDs of type Testing/Security/Data reflect that task's Acceptance Criteria
-> - Performance-oriented rows assert a stated threshold (latency, count, ratio) when one is implied by the Validation column
+> - Assertions use concrete values (status codes, error codes, DB results), not vague categories
+> - Tests linked to Testing/Security/Data Implementation Task IDs reflect that task's Acceptance Criteria
+> - Performance-oriented rows assert the threshold (latency, count, ratio) implied by the Validation column
 >
 > Respond with exactly one of:
 > - `APPROVED`
@@ -215,20 +213,16 @@ Summarise the plan in ≤15 lines, then proceed without waiting.
 For each task:
 
 1. Read existing files this task extends or depends on before writing.
-2. Write unit tests for this task's functions/methods in isolation (mock all external I/O). Each unit test must:
-   - Cover the happy path and every error condition implied by the task's Acceptance Criteria and Validation columns
-   - Assert exact return values, raised exceptions, or emitted log entries
-3. Write integration tests for this task's interactions (real DB, real queue, mocked external APIs). Each integration test must:
-   - Establish real DB state (seed rows, not mocks)
-   - Assert DB state changes, not just return values
+2. Write unit tests for this task's functions/methods in isolation (mock all external I/O). Cover the happy path and every error condition implied by the Acceptance Criteria and Validation columns; assert exact return values, raised exceptions, or emitted log entries.
+3. Write integration tests for this task's interactions (real DB, real queue, mocked external APIs). Establish real DB state (seed rows, not mocks); assert DB state changes, not just return values.
 4. Write complete, production-ready implementation code:
    - Match the project's naming conventions, import style, error handling idioms
-   - Implement **all** behaviour required by the task's Acceptance Criteria — no stubs, TODOs, or placeholders
+   - Implement **all** behaviour the Acceptance Criteria requires — no stubs, TODOs, or placeholders
    - For `Discovery` tasks, produce the repo-local artifact or decision the task specifies (not code) and record it where later tasks can reference it
    - For `Release` tasks, implement the migration/flag/rollout/rollback work described, following the Release Plan
-   - Include only types, functions, and exports the task requires
-5. Run the task's Validation command (if one is specified) and confirm it passes before marking the task done.
-6. Remove any stubs written in Loop A for this task.
+   - Include only the types, functions, and exports the task requires
+5. Run the task's Validation command, if one is specified, and confirm it passes before marking the task done.
+6. Remove any Loop A stubs for this task.
 
 Log: `"Loop B — implemented [Task ID]: [Task]"`.
 
@@ -236,42 +230,34 @@ Log: `"Loop B — implemented [Task ID]: [Task]"`.
 
 Spawn a fresh subagent via the Agent tool with this prompt:
 
-> You are a critical senior engineer reviewing an implementation against its Implementation Plan task specification. Find gaps only — do not rewrite code yourself.
+> You are a critical senior engineer reviewing an implementation against its Implementation Plan task specification. Find gaps only — do not rewrite code.
 >
 > **Task:** [Task ID] [Task] ([Type])
 >
-> **Task specification:**
-> Target Files / Modules: [...]
-> Dependencies: [...]
-> Acceptance Criteria: [...]
-> Validation: [...]
+> **Task specification:** Target Files / Modules: [...] · Dependencies: [...] · Acceptance Criteria: [...] · Validation: [...]
 >
-> **Files implemented:**
-> [list of production file paths]
+> **Files implemented:** [list of production file paths]
 >
-> **Unit test files:**
-> [list of unit test file paths]
+> **Unit test files:** [list of unit test file paths]
 >
-> **Integration test files:**
-> [list of integration test file paths]
+> **Integration test files:** [list of integration test file paths]
 >
-> **Code content:**
-> [full content of each written file]
+> **Code content:** [full content of each written file]
 >
 > **Must pass** (flag any failure):
 > - Every clause of the Acceptance Criteria is met
 > - No stubs remain: scan every production file for `pass`, `TODO`, `FIXME`, `raise NotImplementedError`, `return 501`, empty function bodies, and placeholder strings like `"not implemented"` — flag each occurrence with file and line number
 > - Error handling matches what the Acceptance Criteria / Validation implies (correct HTTP status codes and error codes where applicable)
-> - Security-relevant Acceptance Criteria enforced (auth checks, input validation, PII handling) when the task Type is Security or the criteria mention it
+> - Security-relevant Acceptance Criteria enforced (auth checks, input validation, PII handling) when Type is Security or the criteria mention it
 > - Unit tests cover every function's happy path and all error conditions implied by the Acceptance Criteria
-> - Integration tests cover every cross-boundary interaction (DB writes, queue events) implied by the Dependencies column
+> - Integration tests cover every cross-boundary interaction (DB writes, queue events) implied by Dependencies
 > - No regressions: pre-existing interfaces in modified files are unchanged
 >
-> **Should pass** (flag if 2 or more fail):
+> **Should pass** (flag if 2+ fail):
 > - Naming matches the Target Files / Modules column exactly
 > - The task's Validation command, when run, would pass against this implementation
 > - Integration tests use real DB state, not mocks
-> - Discovery/Release task outputs are recorded in a form later tasks can consume without re-asking the user
+> - Discovery/Release task outputs are recorded so later tasks can consume them without re-asking the user
 >
 > Respond with exactly one of:
 > - `APPROVED`
