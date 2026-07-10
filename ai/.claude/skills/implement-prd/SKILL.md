@@ -71,7 +71,7 @@ Do not ask for the Implementation Plan source — you will look it up from Confl
 
 Parse the Implementation Plan document for these sections (as produced by /plan-prd):
 
-**From the Task Summary / Task Breakdown table(s)**, parse implementable units. For each row record: **Task ID** (as given, e.g. `IMP-REQ-001-01`), **Requirement** (if present), **Task** (description), **Type** (Discovery | Backend | Frontend | Data | Infrastructure | Testing | Security | Documentation | Release), **Target Files / Modules**, **Owner Role**, **Dependencies**, **Acceptance Criteria**, **Validation**.
+**From the Task Summary / Task Breakdown tables**, parse implementable units. Tables are grouped first by requirement (a `### REQ-...` sub-heading), then by Owner Role within each requirement (a `##### [Role]` sub-heading, e.g. Backend Engineer, Frontend Engineer, QA Engineer). For each row record: **Task ID** (as given, e.g. `IMP-REQ-001-01`), **Requirement** (from the enclosing requirement heading), **Owner Role** (from the enclosing role heading), **Task** (description), **Type** (Discovery | Backend | Frontend | Data | Infrastructure | Testing | Security | Documentation | Release), **Target Files / Modules**, **Dependencies**, **Acceptance Criteria**, **Validation**. Preserve the requirement-then-role grouping when presenting or batching tasks — do not flatten or re-sort it, though the Execution Order section (not this grouping) remains authoritative for build sequencing.
 
 **From the Execution Order section**, record the dependency-ordered task ID sequence and any milestone groupings. Use this as the authoritative build order, cross-checked against the Dependencies column.
 
@@ -86,6 +86,40 @@ Parse the Implementation Plan document for these sections (as produced by /plan-
 Present a summary to the user and confirm before proceeding:
 
 > "Found [N] tasks across [M] requirements and [K] test objectives. Shall I implement both in [target directory]?"
+
+**Write the implementation checklist.** Create `IMPLEMENTATION_CHECKLIST.md` in the target directory (or read it if it already exists — see the resuming edge case below) with one unchecked item per test objective and per task, grouped exactly like the source document:
+
+```markdown
+# Implementation Checklist: [Implementation Plan title]
+
+**Source Implementation Plan:** [Confluence link]
+**Target directory:** [path]
+
+## REQ-001 — [Title]
+
+### Loop A — Test Plan Implementation Breakdown
+- [ ] TC-REQ001-1 — [Test Objective]
+- [ ] TC-REQ001-2 — [Test Objective]
+
+### Loop B — Task Breakdown
+#### Backend Engineer
+- [ ] IMP-REQ-001-01 — [Task]
+#### Frontend Engineer
+- [ ] IMP-REQ-001-02 — [Task]
+
+## REQ-002 — [Title]
+...
+
+## System Tests (Loop A suite vs. Loop B production code)
+- [ ] TC-REQ001-1
+- [ ] TC-REQ001-2
+...
+```
+
+This file is the single source of truth for run progress. Update it — never batch updates, never regenerate it from scratch — at every point called out in Steps 4 and 5 below, using Edit (not a full rewrite) so prior progress is never lost. Checkbox states:
+- `- [ ]` — not started or not yet passing
+- `- [x]` — clean pass (reviewer approved, tests green)
+- `- [ ] ⚠️ [reason]` — accepted with `Needs Human Review` / `unresolved` after the maximum revision rounds; left **unchecked** so outstanding work stays visible even though the loop moved on
 
 ---
 
@@ -151,6 +185,8 @@ Spawn a fresh subagent (not a fork) via the Agent tool with this prompt:
 > - `REVISE:\n1. [test-name or "missing test"] — [specific gap and what to add or fix]\n2. ...`
 
 If `REVISE`: apply every item and re-run the reviewer once. After the second review, if still `REVISE`: prepend `⚠️ Needs Human Review` to that test file and continue. Maximum 2 rounds per group — never loop further.
+
+**Update the checklist.** For each Test Case ID in this requirement group, check it off (`- [x]`) if the reviewer approved; otherwise leave it unchecked and append `⚠️ Needs Human Review: [outstanding items]`.
 
 ### A4 — Confirm compilation
 
@@ -267,6 +303,8 @@ If the reviewer returned `REVISE:`: apply every cited gap, re-run the reviewer o
 
 Log: `"After [Task ID]: unit [P]/[F], integration [P]/[F]"`.
 
+**Update the checklist.** Check off (`- [x]`) this Task ID under its requirement/role heading if the reviewer approved AND both unit and integration tests passed; otherwise leave it unchecked and append the `⚠️ Needs Human Review` or `⚠️ Test unresolved` marker with a one-line reason.
+
 ### B5 — Full system test run
 
 After all tasks complete Loop B, run the full test suite from Loop A (system tests) against the completed production code:
@@ -280,13 +318,15 @@ Stop after 3 fix-and-rerun cycles per failing system test; mark it `⚠️ Syste
 
 Log: `"System tests: [P] passing / [F] failing"`.
 
+**Update the checklist.** Check off (`- [x]`) each Test Case ID under **System Tests** that passes; leave unchecked with `⚠️ System test unresolved` otherwise.
+
 ---
 
 ## Step 6: Summary report
 
 Remove the Stop hook added in Step 0 from `.claude/settings.local.json` (leave all other hooks intact). If the file becomes empty, delete it.
 
-Present a concise implementation report:
+Confirm `IMPLEMENTATION_CHECKLIST.md` reflects the final state of every item (do not delete it — it is the durable record of this run). Present a concise implementation report:
 
 ```
 ## Implementation complete
@@ -344,6 +384,8 @@ Loop A result: [N] compiled, all failing before production code (expected).
 **Conflicting Implementation Plan and existing code**: surface the conflict explicitly, ask the user which takes precedence before writing.
 
 **Large plan (10+ tasks)**: process Loop B in batches of 5 following the Execution Order, report progress after each batch, and confirm before continuing. Loop A processes all test objective groups up front.
+
+**Resuming an interrupted run**: if `IMPLEMENTATION_CHECKLIST.md` already exists in the target directory when Step 3 begins, read it instead of creating a new one. Treat every `- [x]` item as already done and skip re-generating or re-reviewing it; resume Loop A/B at the first unchecked or `⚠️`-flagged item. Confirm with the user which items are being resumed versus redone before proceeding.
 
 ## Additional resources
 
