@@ -301,9 +301,11 @@ Stop after 3 fix-and-rerun cycles per failing test; mark it `⚠️ Test unresol
 
 If the reviewer returned `REVISE:`: apply every cited gap, re-run the reviewer once. After the second review, if still `REVISE:`: mark the task `⚠️ Needs Human Review: [outstanding issues]` and continue. Maximum 2 revision rounds — never loop further.
 
+**Final re-review gate.** A task must never be marked complete on the strength of the B3 review alone if any production or test file changed afterward during fix-and-rerun cycles. If any such file changed, spawn one more fresh B3-reviewer subagent (same prompt, updated file contents) against the final code before checking the box. This final review counts toward the same 2-round revision cap as B3 — if it returns `REVISE` a second time, stop revising and mark the task `⚠️ Needs Human Review: [outstanding issues]` instead of checking it off.
+
 Log: `"After [Task ID]: unit [P]/[F], integration [P]/[F]"`.
 
-**Update the checklist.** Check off (`- [x]`) this Task ID under its requirement/role heading if the reviewer approved AND both unit and integration tests passed; otherwise leave it unchecked and append the `⚠️ Needs Human Review` or `⚠️ Test unresolved` marker with a one-line reason.
+**Update the checklist.** Check off (`- [x]`) this Task ID under its requirement/role heading only if: the B3 reviewer (and, when applicable, the final re-review) approved AND both unit and integration tests passed. Otherwise leave it unchecked and append the `⚠️ Needs Human Review` or `⚠️ Test unresolved` marker with a one-line reason.
 
 ### B5 — Full system test run
 
