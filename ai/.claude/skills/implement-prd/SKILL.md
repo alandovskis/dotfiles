@@ -307,6 +307,14 @@ Log: `"After [Task ID]: unit [P]/[F], integration [P]/[F]"`.
 
 **Update the checklist.** Check off (`- [x]`) this Task ID under its requirement/role heading only if: the B3 reviewer (and, when applicable, the final re-review) approved AND both unit and integration tests passed. Otherwise leave it unchecked and append the `⚠️ Needs Human Review` or `⚠️ Test unresolved` marker with a one-line reason.
 
+**Commit the task.** If the target directory is a git repository, create one commit per task immediately after its checklist update, regardless of whether it was checked off or flagged — do not batch commits across tasks and do not wait until Loop B finishes. Stage exactly the files this task touched (production files, unit test files, integration test files, and `IMPLEMENTATION_CHECKLIST.md`) — never `git add -A` or `git add .`. Use a conventional commit:
+
+```
+<type>(<task-id>): <task, imperative mood, lowercase>
+```
+
+Map the task's Type to `<type>`: Backend | Frontend | Data | Infrastructure | Security → `feat`; Testing → `test`; Documentation → `docs`; Release | Discovery → `chore`. Use the Task ID (lowercased, e.g. `imp-req-001-01`) as the commit scope. If the task was flagged `⚠️ Needs Human Review` or `⚠️ Test unresolved`, append a body line with that exact marker and reason so it's visible in `git log`. Never use `--no-verify`; if a commit hook fails, fix the underlying issue and re-commit rather than skipping it. If the target directory is not a git repository, skip this step silently.
+
 ### B5 — Full system test run
 
 After all tasks complete Loop B, run the full test suite from Loop A (system tests) against the completed production code:
