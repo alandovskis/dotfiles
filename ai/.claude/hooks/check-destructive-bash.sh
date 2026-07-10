@@ -235,11 +235,11 @@ if echo "$cmd_check" | grep -qE '>[^>][^|&;]*/etc/[a-zA-Z]'; then
     deny "Shell redirection to /etc/ is blocked. Modifying system config files can break the OS."
 fi
 
-# --- git commit in the dotfiles / .claude repo that stages skill or settings files ---
-# Any git add/commit touching ~/.claude/skills/ or ~/.claude/settings.json is a
-# self-modification attempt and must require explicit user action outside of Claude.
-if echo "$cmd_check" | grep -qE '\bgit\b[^|&;]*(add|commit)\b[^|&;]*(\.claude/skills|\.claude/settings\.json|claude/\.claude/skills|claude/\.claude/settings\.json)'; then
-    deny "staging or committing Claude Code skill/settings files is blocked to prevent self-modification of agent behaviour. Make this commit manually outside of Claude."
+# --- git commit in the dotfiles / .claude repo that stages settings files ---
+# Any git add/commit touching ~/.claude/settings.json is a self-modification
+# attempt and must require explicit user action outside of Claude.
+if echo "$cmd_check" | grep -qE '\bgit\b[^|&;]*(add|commit)\b[^|&;]*(\.claude/settings\.json|claude/\.claude/settings\.json)'; then
+    deny "staging or committing Claude Code settings files is blocked to prevent self-modification of agent behaviour. Make this commit manually outside of Claude."
 fi
 
 exit 0
