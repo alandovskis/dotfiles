@@ -88,6 +88,7 @@ their evidence before raising a finding.
 | A PRD is provided, linked, or discoverable | [PRD-compliance assessment](references/prd-compliance-assessment.md) |
 | Always | [Simplification assessment](references/simplification-assessment.md) |
 | The change affects domain behavior | [Domain-model assessment](references/domain-model-assessment.md) |
+| The change affects a documented public interface, configuration, workflow, user-visible behavior, or documentation itself | [Documentation assessment](references/documentation-assessment.md) |
 
 ### 5. Calibrate severity
 
@@ -190,6 +191,8 @@ After findings, optionally include:
   candidates that do not meet the finding standard.
 - `Domain-model evidence:` the validated domain-rule or boundary assessment when
   it materially affects the review.
+- `Documentation evidence:` the validated documentation-to-implementation
+  assessment when documentation is applicable and materially affects the review.
 
 Do not dilute findings with praise, a diff summary, or generic advice. Do not
 claim the change is correct; state only the level of confidence justified by the
