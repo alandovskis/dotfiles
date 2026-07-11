@@ -2,7 +2,8 @@
 name: anti-hallucination
 description: |-
   CRITICAL SAFETY SKILL — Verify ALL technical claims, API signatures, library methods, code behavior,
-  and factual statements before answering. Use Context7, WebSearch, and Read tools to confirm.
+  and factual statements before answering. Use the available documentation, web-search,
+  and file-reading capabilities to confirm.
   MUST BE USED PROACTIVELY whenever: writing code that calls any library or API, answering technical questions,
   stating facts about frameworks or tools, mentioning version numbers, describing function behavior,
   recommending libraries, comparing technologies, or making any claim that could be wrong.
@@ -12,14 +13,6 @@ description: |-
   "does this library support", "what's the default", "is this deprecated".
   Prevents hallucinated code, wrong function names, fabricated documentation, and incorrect facts.
   When in doubt about ANY technical claim, this skill MUST activate.
-allowed-tools:
-  - mcp__context7__resolve-library-id
-  - mcp__context7__get-library-docs
-  - mcp__fetch__fetch
-  - WebSearch
-  - WebFetch
-  - Read
-  - Grep
 ---
 
 # Anti-Hallucination Protocol
@@ -28,10 +21,10 @@ allowed-tools:
 
 ```
 Question type?
-├── API/Library signature → Context7 FIRST, THEN answer
-├── Recent event/fact (< 1 year) → WebSearch FIRST
-├── File content → Read tool FIRST
-├── Code behavior → Read + trace FIRST
+├── API/Library signature → authoritative documentation FIRST, THEN answer
+├── Recent event/fact (< 1 year) → web search FIRST
+├── File content → file-reading capability FIRST
+├── Code behavior → read + trace FIRST
 ├── Historical fact → Can use training data
 └── Cannot verify → State "I don't know"
 ```
@@ -61,11 +54,11 @@ Question type?
 
 | Claim Type | Verification Tool |
 |------------|-------------------|
-| Library API | `mcp__context7__get-library-docs` |
-| General fact | `WebSearch` |
-| Specific URL | `mcp__fetch__fetch` or `WebFetch` |
-| File content | `Read` |
-| Code pattern | `Grep` |
+| Library API | Official documentation or an available documentation index |
+| General fact | Web search |
+| Specific URL | An available fetch or browser capability |
+| File content | File-reading capability |
+| Code pattern | Repository search capability |
 
 ### Step 2: Execute Verification
 
@@ -79,8 +72,8 @@ BEFORE answering:
 
 ```
 # Good response
-According to React 18.2 documentation: `useEffect` accepts two arguments...
-Source: Context7 /facebook/react
+According to the React 18.2 documentation: `useEffect` accepts two arguments...
+Source: React documentation
 
 # Bad response
 useEffect accepts two arguments...  (no citation)
@@ -92,11 +85,11 @@ useEffect accepts two arguments...  (no citation)
 
 ```
 HIGH RISK: Method names, parameter order, return types
-ACTION: Always verify with Context7 before stating
+ACTION: Always verify with authoritative documentation before stating
 
 Example:
 ❌ "The function takes (a, b, c) as parameters"
-✅ "According to Context7: fetch(url, options?) → Promise<Response>"
+✅ "According to the official documentation: fetch(url, options?) → Promise<Response>"
 ```
 
 ### Version-Specific Behavior
@@ -114,7 +107,7 @@ Example:
 
 ```
 HIGH RISK: Features added/removed recently
-ACTION: WebSearch for confirmation
+ACTION: Search the web for confirmation
 
 Example:
 ❌ "React 19 introduces..."

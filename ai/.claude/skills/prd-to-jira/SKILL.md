@@ -11,12 +11,14 @@ description: |-
 
 You are creating Jira tickets from a PRD stored in Confluence. Follow the steps below precisely.
 
+**Host and connector independence:** Use the current host's equivalent interaction and Atlassian connector capabilities. Names such as `getConfluencePage` and `createJiraIssue` describe required service operations, not required host-specific tool names.
+
 ## Step 1: Get the Confluence page
 
 If the user provided a Confluence URL or page ID in their message, extract the page ID from it:
 - Tiny link format: `/wiki/x/<ID>` — use `<ID>` directly as `pageId`
 - Long format: `/wiki/spaces/<SPACE>/pages/<ID>/...` — use the numeric `<ID>`
-- If no page was provided, use AskUserQuestion to ask for the Confluence page URL or page ID.
+- If no page was provided, use the host's user-interaction mechanism to ask for the Confluence page URL or page ID.
 
 ## Step 2: Resolve cloud ID
 
@@ -46,7 +48,7 @@ If the Requirements table is missing or empty, tell the user and stop.
 
 ## Step 5: Confirm Jira project
 
-Use AskUserQuestion to ask:
+Use the host's user-interaction mechanism to ask:
 1. Which Jira project should the tickets be created in? (project key, e.g. `MYAPP`)
 2. Should tickets for "Won't" requirements be skipped? (default: yes)
 

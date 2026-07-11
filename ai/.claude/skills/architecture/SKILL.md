@@ -4,18 +4,11 @@ description: |-
   Documents and maintains the architecture of the current codebase using the C4 model
   and Mermaid diagrams. Produces four separate files under docs/: System Context,
   Container, Component diagrams, and a design patterns catalogue. Renders each diagram
-  with mcp__pencil after writing. Re-run at any time to update docs to reflect the
+  with an available Mermaid renderer after writing. Re-run at any time to update docs to reflect the
   current state of the code.
   Triggers: "document architecture", "architecture diagram", "update architecture",
   "C4 diagram", "system context", "container diagram", "component diagram",
   "design patterns", "architecture documentation", "keep architecture up to date".
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Bash
-  - Glob
-  - Grep
 ---
 
 # Architecture Skill
@@ -180,11 +173,11 @@ For **each C4 diagram file** (`c4-context.md`, `c4-containers.md`, `c4-component
    - Creating: write the full template
    - Updating: replace only the Mermaid code block; preserve all surrounding text
 
-2. **Render immediately** after writing:
+2. **Render immediately** after writing, using an available Mermaid renderer (for example, `mmdc`):
    ```
    mmdc -i docs/<file>.md -o docs/<file>.png
    ```
-   Show the rendered image to the user before moving to the next file.
+   Inspect or show the rendered image when the host supports it before moving to the next file.
 
 For **`docs/architecture-patterns.md`**:
 

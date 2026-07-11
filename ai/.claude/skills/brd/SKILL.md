@@ -11,9 +11,11 @@ description: |-
 
 You are helping the user create a Business Requirements Document (BRD). Gather the necessary information through targeted questions, then produce a polished Markdown document following the exact template below.
 
+**Host and connector independence:** Use the current host's equivalent interaction, filesystem, and Confluence connector capabilities. Names such as `getConfluenceSpaces` describe the required Confluence operation, not a required host-specific tool name.
+
 ## Step 1: Gather information
 
-If the user invoked this skill with a project or initiative name in their message, use it as context. Then use AskUserQuestion to collect the following in batches (max 4 questions per call):
+If the user invoked this skill with a project or initiative name in their message, use it as context. Then use the host's user-interaction mechanism to collect the following in batches (max 4 questions per call):
 
 **Round 1 — Overview & ownership:**
 1. What is the project / initiative name and a one-sentence description?
@@ -186,9 +188,9 @@ Produce a first-draft Markdown document using exactly this structure:
 - The Executive Summary must describe business value, not implementation approach.
 - Do not add sections beyond the template above.
 
-## Step 3: Fork a reviewer subagent
+## Step 3: Run an independent reviewer pass
 
-Use the `Agent` tool with `subagent_type: "fork"` to spawn an independent reviewer. The fork inherits your conversation context, so pass the draft BRD explicitly in the prompt. The reviewer evaluates only what you give it.
+Use a fresh reviewer agent or isolated review context when the host supports delegation. Pass the draft BRD explicitly and give the reviewer only the material below. If delegation is unavailable, perform the reviewer pass yourself without relying on generation reasoning. The reviewer evaluates only the supplied draft.
 
 Reviewer prompt to use (substitute `{{DRAFT}}` with the full draft markdown):
 
@@ -208,7 +210,7 @@ Reviewer prompt to use (substitute `{{DRAFT}}` with the full draft markdown):
 > ---
 > {{DRAFT}}
 
-Wait for the fork to return its findings.
+Complete the reviewer pass before continuing.
 
 ## Step 4: Revise
 
@@ -216,7 +218,7 @@ Apply all findings from the reviewer to produce a revised BRD. Output only the f
 
 ## Step 5: Offer to save or publish
 
-After outputting the revised document, use AskUserQuestion to ask:
+After outputting the revised document, use the host's user-interaction mechanism to ask:
 1. Would you like to save this as a `.md` file locally? (provide a suggested slugified filename, e.g. `brd-initiative-name.md`)
 2. Would you like to publish this to Confluence?
 
@@ -228,9 +230,9 @@ If the user wants to publish to Confluence, proceed to **Step 5a**.
 
 1. **Resolve the cloud ID** — call `getAccessibleAtlassianResources` to get the user's Confluence cloud ID.
 
-2. **Choose the space** — call `getConfluenceSpaces` with the cloud ID to retrieve all available spaces. Present every returned space to the user via AskUserQuestion and ask them to select one. Do not ask the user to type a space key.
+2. **Choose the space** — call `getConfluenceSpaces` with the cloud ID to retrieve all available spaces. Present every returned space using the host's user-interaction mechanism and ask the user to select one. Do not ask the user to type a space key.
 
-3. **Choose the parent page** — ask the user via AskUserQuestion whether to place the BRD under a specific parent page or at the space root. If they specify a parent page, call `searchConfluenceUsingCql` with:
+3. **Choose the parent page** — ask the user, using the host's user-interaction mechanism, whether to place the BRD under a specific parent page or at the space root. If they specify a parent page, call `searchConfluenceUsingCql` with:
    `type = page AND space = "SPACEKEY" AND title = "Parent Page Title"`
    Use the returned page ID as `parentId`. If they choose the space root, omit `parentId`.
 
@@ -249,4 +251,4 @@ If the user wants to publish to Confluence, proceed to **Step 5a**.
 
 ## Step 6: User iteration loop
 
-After presenting the revised BRD, ask the user: "Would you like any changes?" If yes, apply their feedback, then repeat Steps 3–4 (fork reviewer + revise) before presenting the updated version. If the document was already published to Confluence, offer to update it via `updateConfluencePage` after each accepted revision. Continue until the user is satisfied.
+After presenting the revised BRD, ask the user: "Would you like any changes?" If yes, apply their feedback, then repeat Steps 3–4 (independent review + revise) before presenting the updated version. If the document was already published to Confluence, offer to update it via `updateConfluencePage` after each accepted revision. Continue until the user is satisfied.

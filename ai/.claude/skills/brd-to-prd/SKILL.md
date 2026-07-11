@@ -13,9 +13,11 @@ description: |-
 
 You are decomposing a Business Requirements Document (BRD) into one or more properly-scoped Product Requirements Documents (PRDs). For each proposed PRD scope, run a generator-reviewer loop to produce a high-quality PRD, then publish all of them to Confluence. Follow the steps below precisely.
 
+**Host and connector independence:** Use the current host's equivalent interaction, delegation, and Confluence connector capabilities. Names such as `getConfluencePage` describe the required Confluence operation, not a required host-specific tool name.
+
 ## Step 1: Gather inputs
 
-If the user has not already provided the following, use AskUserQuestion to ask:
+If the user has not already provided the following, use the host's user-interaction mechanism to ask:
 
 1. **BRD source** — Confluence page URL or page ID
 
@@ -27,7 +29,7 @@ Call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId`
 
 ## Step 2b: Choose destination space and parent page
 
-Call `getConfluenceSpaces` with the `cloudId`. Do NOT pass any `type` filter — omitting it returns all spaces including collaboration spaces. Present every returned space to the user via AskUserQuestion and ask them to choose one. Then ask whether to place the PRDs under a specific parent page (if yes, ask for the page title or URL) or at the space root.
+Call `getConfluenceSpaces` with the `cloudId`. Do NOT pass any `type` filter — omitting it returns all spaces including collaboration spaces. Present every returned space using the host's user-interaction mechanism and ask the user to choose one. Then ask whether to place the PRDs under a specific parent page (if yes, ask for the page title or URL) or at the space root.
 
 ## Step 3: Fetch the BRD
 
@@ -73,11 +75,11 @@ Wait for user confirmation before generating. If the user adjusts the scoping, u
 
 ## Step 5: Generator-reviewer loop — one PRD per scope
 
-For **each proposed PRD**, run the following passes. Use fresh (non-fork) subagents for reviewer and revision so they have no memory of generation reasoning.
+For **each proposed PRD**, run the following passes. Use fresh, isolated reviewer and revision contexts so they have no memory of generation reasoning. When delegation is unavailable, emulate the isolation by using only the supplied prompt material for each pass.
 
 ### Pass 1 — Generator
 
-Spawn a fresh subagent with this prompt (substitute the bracketed values):
+Use a fresh agent or isolated generation pass with this prompt (substitute the bracketed values):
 
 > You are a senior product manager writing a Product Requirements Document. Return only the completed PRD in the exact Markdown format specified — no explanation or preamble.
 >
@@ -194,11 +196,11 @@ Spawn a fresh subagent with this prompt (substitute the bracketed values):
 > - Source BRD: [BRD Confluence URL]
 > ```
 
-Store the subagent's output as `draft`.
+Store the generation output as `draft`.
 
 ### Pass 2 — Reviewer
 
-Spawn a fresh subagent with this prompt. Pass only the BRD context and `draft` — do not include any generation reasoning:
+Use a fresh agent or isolated reviewer pass with this prompt. Pass only the BRD context and `draft` — do not include any generation reasoning:
 
 > You are a senior product manager doing an adversarial review of a PRD draft. Your only job is to find weaknesses — do not rewrite the PRD.
 >
@@ -232,7 +234,7 @@ Store the output as `review`.
 
 ### Pass 3 — Revision (only if `review` starts with `REVISE`)
 
-Spawn a fresh subagent with this prompt:
+Use a fresh agent or isolated revision pass with this prompt:
 
 > You are a product manager revising a PRD based on reviewer feedback. Return the complete revised PRD in the same Markdown format — all original content with corrections applied. Do not add content beyond what the feedback requires. Return the revised PRD as text — do NOT write any files.
 >

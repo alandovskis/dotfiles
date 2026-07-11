@@ -1,6 +1,6 @@
 # Step 5: Loop B — Implement the Task Breakdown as production code
 
-Read this file after Loop A (`references/loop-a.md`) completes. Loop B implements each task from the Task Breakdown, test-first, gated by review and passing tests. Generation, review, and the test-fix loop for a task run inside **one fresh subagent per task** — the main thread never holds a task's file contents, tool output, or reviewer transcript. It only keeps a short result line per task, so context stays flat regardless of how many tasks the plan has.
+Read this file after Loop A (`references/loop-a.md`) completes. Loop B implements each task from the Task Breakdown, test-first, gated by review and passing tests. Generation, review, and the test-fix loop for a task run inside **one fresh isolated execution pass per task** — the main thread never holds a task's file contents, tool output, or reviewer transcript. It only keeps a short result line per task, so context stays flat regardless of how many tasks the plan has.
 
 ## B1 — Planner (main thread)
 
@@ -14,9 +14,9 @@ Produce a production implementation plan:
 
 Summarise the plan in ≤15 lines, then proceed without waiting. Keep this summary — B2 hands the relevant slice of it to each task's subagent.
 
-## B2 — Task subagent (per task, in Execution Order)
+## B2 — Task execution pass (per task, in Execution Order)
 
-For each task, one at a time, spawn a fresh subagent (not a fork) via the Agent tool. In `--resume` mode, skip tasks that remain checked after the validation required in Step 3; run only unchecked or `⚠️`-flagged tasks in Execution Order. Give the subagent only what this task needs: its own row from the Task Breakdown, the relevant slice of B1's file map / interface contracts / build order, the repository discovery and validation commands from the Autonomous Execution Contract, and — only if this task's Dependencies reference an earlier task — that earlier task's one-line outcome from the checklist. Never pass a prior task's full generation, review, or test output forward.
+For each task, one at a time, use a fresh agent or isolated execution pass. In `--resume` mode, skip tasks that remain checked after the validation required in Step 3; run only unchecked or `⚠️`-flagged tasks in Execution Order. Give the execution pass only what this task needs: its own row from the Task Breakdown, the relevant slice of B1's file map / interface contracts / build order, the repository discovery and validation commands from the Autonomous Execution Contract, and — only if this task's Dependencies reference an earlier task — that earlier task's one-line outcome from the checklist. Never pass a prior task's full generation, review, or test output forward.
 
 Use this prompt, substituting the bracketed task fields:
 
@@ -36,7 +36,7 @@ Use this prompt, substituting the bracketed task fields:
 > - Write complete, production-ready implementation code: match the project's naming conventions, import style, and error handling idioms; implement **all** behaviour the Acceptance Criteria requires — no stubs, TODOs, or placeholders; include only the types, functions, and exports the task requires. For `Discovery` tasks, produce the repo-local artifact or decision the task specifies (not code). For `Release` tasks, implement the migration/flag/rollout/rollback work described.
 > - Remove any Loop A stubs for this task.
 >
-> **2. Review.** Spawn a fresh subagent (not a fork) via the Agent tool with this exact prompt, substituting this task's specification, implemented files, and their content:
+> **2. Review.** Use a fresh reviewer agent or isolated review pass with this exact prompt, substituting this task's specification, implemented files, and their content. If delegation is unavailable, perform the review using only the supplied prompt material:
 >
 > """
 > You are a critical senior engineer reviewing an implementation against its Implementation Plan task specification. Find gaps only — do not rewrite code.
@@ -68,13 +68,13 @@ Use this prompt, substituting the bracketed task fields:
 > - `REVISE:\n1. [file:line-range] — [specific gap and what to add]\n2. ...`
 > """
 >
-> If `REVISE`: apply every cited gap, then spawn another fresh reviewer subagent with the same prompt above. After the second review, if still `REVISE`: stop revising — this task ends as `⚠️ Needs Human Review`.
+> If `REVISE`: apply every cited gap, then run another fresh isolated reviewer pass with the same prompt above. After the second review, if still `REVISE`: stop revising — this task ends as `⚠️ Needs Human Review`.
 >
-> **3. Test gate.** Once reviewed (approved, or exhausted at `⚠️ Needs Human Review`), run this task's unit and integration tests. Detect the commands from, in priority order: the task's own Validation column if it names a runnable command; `package.json` scripts (`test:unit`, `test:integration`); `Makefile` targets (`make test-unit`, `make test-integration`); language defaults with path filters (`pytest tests/unit/test_task.py`, `go test ./internal/task/...`). If services are required (DB, queue), check `docker-compose.yml` and start them via Bash first.
+> **3. Test gate.** Once reviewed (approved, or exhausted at `⚠️ Needs Human Review`), run this task's unit and integration tests. Detect the commands from, in priority order: the task's own Validation column if it names a runnable command; `package.json` scripts (`test:unit`, `test:integration`); `Makefile` targets (`make test-unit`, `make test-integration`); language defaults with path filters (`pytest tests/unit/test_task.py`, `go test ./internal/task/...`). If services are required (DB, queue), check `docker-compose.yml` and start them with the available command-execution capability first.
 >
 > The task is not done until both unit and integration tests pass. For any failing test: read the failing test and the implementation file it exercises; fix the implementation if the Acceptance Criteria backs the expected behaviour, or fix the test only if its assertion is wrong relative to the Acceptance Criteria; re-run after each fix, never batching fixes. Stop after 3 fix-and-rerun cycles per failing test — mark it `⚠️ Test unresolved` with the error output.
 >
-> **4. Final re-review gate.** If any production or test file changed after the review in step 2 (i.e. during the test-fix cycles in step 3), spawn one more fresh reviewer subagent (same prompt as step 2, updated file contents) against the final code. This counts toward the same 2-round cap as step 2 — if it returns `REVISE` again, stop and mark the task `⚠️ Needs Human Review` instead of done.
+> **4. Final re-review gate.** If any production or test file changed after the review in step 2 (i.e. during the test-fix cycles in step 3), run one more fresh isolated reviewer pass (same prompt as step 2, updated file contents) against the final code. This counts toward the same 2-round cap as step 2 — if it returns `REVISE` again, stop and mark the task `⚠️ Needs Human Review` instead of done.
 >
 > **5. Return exactly this to the caller — nothing else** (no file contents, no tool output, no reviewer transcripts):
 > - Task ID
@@ -85,7 +85,7 @@ Use this prompt, substituting the bracketed task fields:
 
 ## B3 — Record result and commit (main thread)
 
-Using only the subagent's returned summary (do not re-read the task's files):
+Using only the isolated execution pass's returned summary (do not re-read the task's files):
 
 **Update the checklist.** Check off (`- [x]`) the Task ID under its requirement/role heading if status is `done`; otherwise leave it unchecked and append the returned `⚠️` marker and reason.
 
@@ -97,7 +97,7 @@ Using only the subagent's returned summary (do not re-read the task's files):
 
 Map the task's Type to `<type>`: Backend | Frontend | Data | Infrastructure | Security → `feat`; Testing → `test`; Documentation → `docs`; Release | Discovery → `chore`. Use the Task ID (lowercased, e.g. `imp-req-001-01`) as the commit scope. If the task was flagged `⚠️`, append a body line with that exact marker and reason so it's visible in `git log`. Never use `--no-verify`; if a commit hook fails, fix the underlying issue and re-commit rather than skipping it. If the target directory is not a git repository, skip this step silently.
 
-Log: `"After [Task ID]: [status], unit [P]/[F], integration [P]/[F]"`. Then move to the next task's B2 subagent — carry forward only the checklist state and this task's one-line outcome (for the next task's Dependencies context, if applicable), nothing more.
+Log: `"After [Task ID]: [status], unit [P]/[F], integration [P]/[F]"`. Then move to the next B2 execution pass — carry forward only the checklist state and this task's one-line outcome (for the next task's Dependencies context, if applicable), nothing more.
 
 ## B4 — Full system test run (main thread)
 

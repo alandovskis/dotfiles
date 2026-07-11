@@ -30,9 +30,9 @@ For each requirement's test objectives:
 
 Log: `"Loop A — written tests for REQ-00X: [file path]"`.
 
-## A3 — Reviewer (subagent, per requirement group)
+## A3 — Reviewer (isolated pass, per requirement group)
 
-Spawn a fresh subagent (not a fork) via the Agent tool with this prompt:
+Use a fresh reviewer agent or isolated review pass with this prompt. If delegation is unavailable, perform the review using only the supplied prompt material:
 
 > You are a QA lead verifying test code against a Test Plan Implementation Breakdown. Flag gaps only — do not rewrite tests.
 >

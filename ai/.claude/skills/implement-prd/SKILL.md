@@ -16,6 +16,8 @@ description: |-
 
 Implement production code from a Confluence Implementation Plan, test-first. It is the **only** input — the plan is designed to stand alone, so don't fetch or depend on any SDD or Test Plan generated alongside it. Launch **two parallel planner-generator-reviewer loops**: Loop A implements the plan's Test Plan Implementation Breakdown as executable code; Loop B implements the Task Breakdown, gated by unit and integration tests. Follow these steps precisely.
 
+**Host and connector independence:** Use the current host's equivalent interaction, delegation, filesystem, shell, and Confluence connector capabilities. Names such as `getConfluencePage` describe the required Confluence operation, not a required host-specific tool name. If a host cannot delegate, use the isolated-pass fallback described in the loop instructions.
+
 ## Invocation
 
 Use `/implement-prd` for a new run. Use `/implement-prd --resume [target-directory]` to continue an interrupted run; when the optional target directory is omitted, use the current working directory. `--resume=<target-directory>` is equivalent. Reject any other option or positional argument rather than guessing its meaning.
@@ -26,38 +28,13 @@ Resume mode continues the exact plan recorded in `IMPLEMENTATION_CHECKLIST.md`; 
 
 > **Don't do — xfail markers.** Never use `@pytest.mark.xfail`, `test.failing`, `xit`, `xtest`, or any other expected-failure mechanism. Loop A tests must fail outright, not xfail, because they exercise production code that doesn't exist yet; Loop B tests must pass. xfail masks real gaps and defeats the test gate.
 
-## Step 0: Register a Stop hook
+## Step 0: Establish the test gate
 
-Before doing anything else, add a `Stop` hook to `.claude/settings.local.json` so the E2E test suite runs automatically each time you end a turn. This ensures no turn completes with a broken test suite.
-
-Read `.claude/settings.local.json` first, then merge this into the `hooks.Stop` array (preserve any existing hooks):
-
-```json
-{
-  "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd apps/web && python3 -m pytest tests/e2e/ -q --tb=no 2>&1 | tail -5",
-            "timeout": 120,
-            "statusMessage": "Running E2E tests…"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-If `.claude/settings.local.json` does not exist, create it with only the above content.
-
-Remove this hook entry in Step 6 after the summary report is complete.
+Before doing anything else, identify the E2E or system-test command from the Implementation Plan or repository. Run it before the final summary and after any change that could invalidate it. If the host supports temporary lifecycle automation, it may be configured only with the user's approval and must be removed before the run ends. Do not create or modify host-specific configuration files merely to register a lifecycle hook.
 
 ## Step 1: Gather inputs and detect resume mode
 
-For a new run, if the user has not already provided the following, use AskUserQuestion to ask:
+For a new run, if the user has not already provided the following, use the host's user-interaction mechanism to ask:
 
 1. **Target directory** — local path where code will be written (default: current working directory)
 2. **Language / stack** — if not inferable from the Implementation Plan's Target Files / Modules columns, ask which language/framework to use
@@ -75,7 +52,7 @@ For `--resume`:
 
 **2a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-**2b. Choose the space** — for a new run, call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter. Present every returned space to the user via AskUserQuestion and ask them to choose the one containing the Implementation Plan. For `--resume`, extract the Confluence page ID from the checklist's `Source Implementation Plan` link and skip space selection. If the link does not contain a usable page ID, fall back to the new-run space/page selection flow and ask the user to confirm the matching page.
+**2b. Choose the space** — for a new run, call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter. Present every returned space using the host's user-interaction mechanism and ask the user to choose the one containing the Implementation Plan. For `--resume`, extract the Confluence page ID from the checklist's `Source Implementation Plan` link and skip space selection. If the link does not contain a usable page ID, fall back to the new-run space/page selection flow and ask the user to confirm the matching page.
 
 **2c. Choose the page** — for a new run (or resume fallback), call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. If there are more pages than fit in one response, paginate until all are listed. Present the full page list and ask the user to identify the **Implementation Plan** page (title typically "Implementation Plan: …"). Do not ask about SDD or Test Plan pages. In normal resume mode, use the extracted page ID directly.
 
@@ -130,7 +107,7 @@ For a new run, present a summary to the user and confirm before proceeding:
 ...
 ```
 
-This file is the single source of truth for run progress. Update it — never batch updates, never regenerate it from scratch — at every point called out in Steps 4 and 5 below, using Edit (not a full rewrite) so prior progress is never lost. Checkbox states:
+This file is the single source of truth for run progress. Update it incrementally — never batch updates or regenerate it from scratch — at every point called out in Steps 4 and 5 below, so prior progress is never lost. Checkbox states:
 - `- [ ]` — not started or not yet passing
 - `- [x]` — clean pass (reviewer approved, tests green)
 - `- [ ] ⚠️ [reason]` — accepted with `Needs Human Review` / `unresolved` after the maximum revision rounds; left **unchecked** so outstanding work stays visible even though the loop moved on
@@ -149,13 +126,11 @@ Read `references/loop-a.md` now and follow it completely (A1 Planner → A2 Gene
 
 ## Step 5: Loop B — Implement the Task Breakdown as production code
 
-Read `references/loop-b.md` now and follow it completely (B1 Planner → B2 Task subagent, one per task, containing its own generate → review → test-fix cycle → B3 Record result and commit → B4 Full system test run).
+Read `references/loop-b.md` now and follow it completely (B1 Planner → B2 Task execution pass, one per task, containing its own generate → review → test-fix cycle → B3 Record result and commit → B4 Full system test run).
 
 ---
 
 ## Step 6: Summary report
-
-Remove the Stop hook added in Step 0 from `.claude/settings.local.json` (leave all other hooks intact). If the file becomes empty, delete it.
 
 Confirm `IMPLEMENTATION_CHECKLIST.md` reflects the final state of every item (do not delete it — it is the durable record of this run). Present a concise implementation report:
 
@@ -221,5 +196,5 @@ Loop A result: [N] compiled, all failing before production code (expected).
 ## Additional resources
 
 - **`references/loop-a.md`** — Step 4 in full: A1–A4, including the A3 reviewer prompt
-- **`references/loop-b.md`** — Step 5 in full: B1–B4. Each task's generate/review/test-fix cycle runs in a fresh per-task subagent so the main thread only keeps a one-line result per task
+- **`references/loop-b.md`** — Step 5 in full: B1–B4. Each task's generate/review/test-fix cycle runs in a fresh, isolated per-task execution pass so the main thread only keeps a one-line result per task
 - **`references/implementation-patterns.md`** — language-specific patterns for common task-specification constructs (REST handlers, ORMs, auth middleware, migrations)

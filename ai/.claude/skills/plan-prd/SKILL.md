@@ -10,13 +10,15 @@ description: |-
 
 Turn a Confluence PRD into three artifacts every time: a Software Design Document (SDD), a System Test Plan, and an autonomous Implementation Plan. For each requirement, run a generator-reviewer loop per artifact, then publish the assembled documents back to Confluence. Follow the steps below precisely.
 
+**Host and connector independence:** Use the current host's equivalent interaction, delegation, rendering, and Confluence connector capabilities. Names such as `getConfluencePage` describe the required Confluence operation, not a required host-specific tool name.
+
 ## Step 1: Resolve cloud ID and choose source PRD
 
 **1a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-**1b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass a `type` filter — omitting it returns all spaces, including collaboration spaces. Present every returned space via AskUserQuestion and ask which one contains the PRD.
+**1b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass a `type` filter — omitting it returns all spaces, including collaboration spaces. Present every returned space using the host's user-interaction mechanism and ask which one contains the PRD.
 
-**1c. Choose the PRD page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. Paginate until all pages are listed, then present every title via AskUserQuestion and ask which is the PRD.
+**1c. Choose the PRD page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. Paginate until all pages are listed, then present every title using the host's user-interaction mechanism and ask which is the PRD.
 
 **1d. Fetch the PRD** — use the selected page's `id` as `pageId`. Call `getConfluencePage` with `cloudId`, `pageId`, and `contentFormat: "markdown"`.
 
@@ -29,11 +31,11 @@ Do not ask which artifact(s) to generate. Always generate all three:
 
 ## Step 3: Choose destination(s)
 
-Ask the user via AskUserQuestion whether all generated artifacts should publish to the same space/parent page or to different ones.
+Ask the user using the host's user-interaction mechanism whether all generated artifacts should publish to the same space/parent page or to different ones.
 - **Same** — resolve one destination using the destination-resolution procedure below and store it as `spaceId`/`parentId`, used for every generated document.
 - **Different** — resolve a destination using the destination-resolution procedure below for each artifact, storing `sddSpaceId`/`sddParentId`, `tpSpaceId`/`tpParentId`, and `implSpaceId`/`implParentId`.
 
-Destination-resolution procedure: ask whether to publish to the PRD's space or a different one. Same space: reuse the PRD space `id`. Different space: call `getConfluenceSpaces` again (no type filter) and present the list. Either way, call `getPagesInConfluenceSpace` with the destination space `id` and present every title via AskUserQuestion so the user can choose the parent page (include "space root" as an option). Store the resolved space/parent IDs under the variable names required by the chosen same/different mode.
+Destination-resolution procedure: ask whether to publish to the PRD's space or a different one. Same space: reuse the PRD space `id`. Different space: call `getConfluenceSpaces` again (no type filter) and present the list. Either way, call `getPagesInConfluenceSpace` with the destination space `id` and present every title using the host's user-interaction mechanism so the user can choose the parent page (include "space root" as an option). Store the resolved space/parent IDs under the variable names required by the chosen same/different mode.
 
 ## Step 4: Extract requirements
 
@@ -100,9 +102,9 @@ Section structure:
 
 **Open Questions** — any unresolved design decisions with owner and target date. Omit if none.
 
-#### Pass 2 — Subagent Reviewer
+#### Pass 2 — Independent Reviewer
 
-Spawn a subagent using the Agent tool with the following prompt (substitute the actual requirement text and draft section):
+Use a fresh reviewer agent or isolated review pass with the following prompt (substitute the actual requirement text and draft section). If delegation is unavailable, perform the review using only the supplied prompt material:
 
 > You are a critical senior software engineer reviewing a draft SDD section. Find gaps only — do not rewrite it.
 >
@@ -132,11 +134,11 @@ Spawn a subagent using the Agent tool with the following prompt (substitute the 
 > - `APPROVED`
 > - `REVISE:\n1. [section] — [specific gap and what to add]\n2. ...`
 
-Wait for the subagent to return its verdict before proceeding.
+Complete the reviewer pass before proceeding.
 
 #### Pass 3 — Revision
 
-If the subagent returned REVISE: apply every cited gap, then spawn a fresh reviewer subagent with the revised draft using the same prompt above.
+If the reviewer returned REVISE: apply every cited gap, then run a fresh isolated reviewer pass on the revised draft using the same prompt above.
 
 After the second review, if still REVISE: accept the section with a `⚠️ Needs Human Review: [outstanding issues]` prefix. Maximum 2 revision rounds per requirement — never loop further.
 
@@ -144,11 +146,11 @@ After the second review, if still REVISE: accept the section with a `⚠️ Need
 
 *Always run.*
 
-Launch three independent subagents using the Agent tool. Each agent is started fresh (not a fork) so the reviewer has no memory of the generation reasoning — giving genuinely independent feedback.
+Run three independent, isolated passes. Use fresh agents when delegation is available; otherwise ensure each pass receives only the stated material, so the reviewer has no memory of the generation reasoning.
 
-#### Agent 1 — Generator
+#### Pass 1 — Generator
 
-Launch a fresh agent with this prompt, substituting the bracketed values:
+Run a fresh generation pass with this prompt, substituting the bracketed values:
 
 > You are a QA engineer writing system-level test cases. Return only the test cases in the format below — no preamble.
 >
@@ -180,11 +182,11 @@ Launch a fresh agent with this prompt, substituting the bracketed values:
 >
 > Use concrete values throughout — the actual example URL, not "a valid URL"; the exact status code and body shape, not "returns an error".
 
-Store the agent's output as `draft`.
+Store the generation output as `draft`.
 
-#### Agent 2 — Reviewer
+#### Pass 2 — Reviewer
 
-Launch a fresh agent with this prompt. Pass only the requirement and `draft` — do not include any generation reasoning or prior context:
+Run a fresh isolated reviewer pass with this prompt. Pass only the requirement and `draft` — do not include any generation reasoning or prior context:
 
 > You are a QA lead reviewing someone else's test cases. Evaluate only the draft below — do not write new cases.
 >
@@ -213,11 +215,11 @@ Launch a fresh agent with this prompt. Pass only the requirement and `draft` —
 > - `APPROVED` (one optional sentence of commentary)
 > - `REVISE:` followed by a numbered list: `[TC-ID or "missing case"] — [specific problem and exactly what to add or fix]`
 
-Store the agent's output as `review`.
+Store the reviewer output as `review`.
 
-#### Agent 3 — Revision (only if `review` starts with `REVISE`)
+#### Pass 3 — Revision (only if `review` starts with `REVISE`)
 
-Launch a fresh agent with this prompt:
+Run a fresh isolated revision pass with this prompt:
 
 > You are a QA engineer revising test cases per reviewer feedback. Return the complete revised set — original cases with corrections applied, plus any new cases the feedback requires — in the original format.
 >
@@ -233,7 +235,7 @@ Launch a fresh agent with this prompt:
 >
 > Apply every numbered feedback item exactly. Add nothing beyond what the feedback requires.
 
-Store the output as `revised_draft`. Then re-run Agent 2 (reviewer) against `revised_draft`.
+Store the output as `revised_draft`. Then re-run Pass 2 (reviewer) against `revised_draft`.
 
 **Termination:**
 - Either review returns `APPROVED` → use those test cases as the final output for this requirement.
@@ -279,7 +281,7 @@ Each requirement task group must include:
 
 #### Pass 2 — Reviewer
 
-Spawn a subagent using the Agent tool with the following prompt:
+Use a fresh reviewer agent or isolated review pass with the following prompt. If delegation is unavailable, perform the review using only the supplied prompt material:
 
 > You are a critical engineering manager reviewing an implementation plan task group. Find planning gaps only — do not rewrite the plan.
 >
@@ -311,7 +313,7 @@ Spawn a subagent using the Agent tool with the following prompt:
 
 #### Pass 3 — Revision
 
-If the subagent returned REVISE: apply every cited gap, then spawn a fresh reviewer subagent with the revised draft using the same prompt above.
+If the reviewer returned REVISE: apply every cited gap, then run a fresh isolated reviewer pass on the revised draft using the same prompt above.
 
 After the second review, if still REVISE: accept the task group with a `⚠️ Needs Human Review: [outstanding issues]` prefix. Maximum 2 revision rounds per requirement — never loop further.
 
