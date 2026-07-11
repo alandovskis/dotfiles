@@ -1,6 +1,7 @@
 model = "gpt-5.6-terra"
 personality = "pragmatic"
 model_reasoning_effort = "medium"
+approval_policy = "untrusted"
 
 [projects."/Users/alex/src/ansible"]
 trust_level = "trusted"
@@ -18,6 +19,9 @@ trust_level = "trusted"
 trust_level = "trusted"
 
 [projects."/Users/alex/src/mobilispect/.symphony/workspaces/MSPECT-35"]
+trust_level = "trusted"
+
+[projects."/Users/alex/src/shovelsup"]
 trust_level = "trusted"
 
 [notice]
@@ -84,3 +88,4 @@ status_line_use_colors = true
 
 [tui.model_availability_nux]
 "gpt-5.5" = 4
+"gpt-5.6-sol" = 3
