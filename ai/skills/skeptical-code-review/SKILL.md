@@ -114,7 +114,45 @@ test evidence exercises meaningful behavior, including relevant failure,
 compatibility, contract, and side-effect paths. A missing layer is a finding only
 when it leaves a specific, credible, material risk untested.
 
-### 5. Calibrate severity
+### 5. Delegate simplification assessment
+
+When delegated review is available, assign an independent subagent a bounded,
+read-only search for behavior-preserving simplification opportunities. The primary
+reviewer validates its evidence and decides whether to raise a finding.
+
+Ask the subagent to examine changed code and its immediate dependencies for:
+
+- **KISS:** needless indirection, state, branching, or control flow that obscures
+  a straightforward implementation.
+- **YAGNI:** speculative generality, extension points, configuration, or
+  abstractions with no current caller or stated requirement.
+- Redundant logic, unreachable code, duplicate representations of the same state,
+  and obsolete compatibility paths that the change makes unnecessary.
+
+For every candidate, establish all of the following:
+
+1. Identify the concrete code and behavior it currently provides.
+2. Trace callers, configuration, public contracts, tests, and relevant runtime
+   paths to show that removal or consolidation preserves required behavior.
+3. Show a concrete payoff: fewer states, branches, dependencies, interfaces, or
+   maintenance paths—not merely a personal preference.
+4. State any unverified assumption or compatibility risk.
+
+Return only substantiated candidates in this format:
+
+```text
+Candidate | Location | Evidence of unnecessary complexity | Behavior-preserving
+simplification | Expected payoff | Compatibility assumptions | Confidence
+```
+
+Do not edit code. Do not propose style-only rewrites, renames, formatting,
+subjective cleanliness, broad redesigns, or simplifications that change public
+contracts, error handling, security boundaries, observability, performance
+characteristics, or supported configuration unless the change explicitly permits
+it. Omit a candidate when reachability, callers, or required behavior cannot be
+verified.
+
+### 6. Calibrate severity
 
 Use these priorities:
 
@@ -156,6 +194,12 @@ root cause; do not combine unrelated problems.
 - Pre-existing issues unless the change makes them worse or prevents a safe fix.
 - Requests for broad redesign when a local, reviewable correction addresses the
   actual problem.
+- Simplification suggestions without evidence of a concrete reduction and a
+  behavior-preserving path.
+- Removing apparent dead code or unused options without tracing dynamic callers,
+  configuration, generated code, and compatibility commitments.
+- Replacing explicit, locally understandable code with a cleverer construct or
+  abstraction merely to reduce lines.
 - Duplicates of another finding.
 
 ## Final response
@@ -170,6 +214,8 @@ After findings, optionally include:
 - `Checks:` relevant checks run and their results, plus meaningful limitations.
 - `Test evidence:` the validated behavior-to-evidence matrix or a concise summary
   of it when test coverage materially affects the review.
+- `Simplification opportunities:` the validated candidate matrix, excluding
+  candidates that do not meet the finding standard.
 
 Do not dilute findings with praise, a diff summary, or generic advice. Do not
 claim the change is correct; state only the level of confidence justified by the
