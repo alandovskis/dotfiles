@@ -188,7 +188,7 @@
       }
     }
   },
+  "effortLevel": "medium",
   "skipWorkflowUsageWarning": true,
-  "agentPushNotifEnabled": true,
-  "effortLevel": "medium"
+  "agentPushNotifEnabled": true
 }
