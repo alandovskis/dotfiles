@@ -16,6 +16,8 @@ Summarise the plan in ≤10 lines, then proceed without waiting.
 
 For each requirement's test objectives:
 
+0. In `--resume` mode, skip a requirement group only when every one of its Test Case IDs is checked in the checklist. For a partially complete group, generate and review only its unchecked or `⚠️`-flagged objectives; preserve existing approved tests unless their imports or shared fixtures must change to make the pending objectives compile.
+
 1. Read any existing test helpers or fixtures these tests will reuse.
 2. Build the Supporting Code / Fixture / Harness Work for each Test Case ID first.
 3. Write executable test code implementing the Test Objective, using the Validation column as the pass condition. The plan carries no full preconditions/steps text, so infer concrete setup and steps from the Test Objective, the linked Implementation Task IDs' Acceptance Criteria, and the Supporting Code / Fixture / Harness Work — name concrete inputs, statuses, and error codes; leave nothing vague.
@@ -63,6 +65,6 @@ If `REVISE`: apply every item and re-run the reviewer once. After the second rev
 
 ## A4 — Confirm compilation
 
-After all requirement groups are written and reviewed, run the test suite once. All tests must **compile and fail** (not error). If any test errors on import, fix the import or stub. Log: `"Loop A complete: [N] tests compiled, [N] failing (expected — no production code yet)"`.
+After all requirement groups are written and reviewed, run the test suite once. All tests must **compile**; tests that exercise production code still absent must fail rather than error. If any test errors on import, fix the import or stub. In `--resume` mode, existing production code may make some system tests pass; passing tests are valid. Log: `"Loop A complete: [N] tests compiled, [N] failing (expected where production is absent)"`.
 
 Loop A is now complete. Read `references/loop-b.md` to begin Step 5.

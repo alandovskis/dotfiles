@@ -9,11 +9,18 @@ description: |-
   is the only input; this skill does not read the SDD or Test Plan documents.
   Trigger when user says: "implement the implementation plan", "implement from
   the implementation plan", "code up this implementation plan", "build from the
-  Confluence implementation plan", "/implement-prd", or asks to turn an
+  Confluence implementation plan", "/implement-prd", "/implement-prd --resume",
+  or asks to turn an
   implementation plan into working code and verify it with tests.
 ---
 
 Implement production code from a Confluence Implementation Plan, test-first. It is the **only** input — the plan is designed to stand alone, so don't fetch or depend on any SDD or Test Plan generated alongside it. Launch **two parallel planner-generator-reviewer loops**: Loop A implements the plan's Test Plan Implementation Breakdown as executable code; Loop B implements the Task Breakdown, gated by unit and integration tests. Follow these steps precisely.
+
+## Invocation
+
+Use `/implement-prd` for a new run. Use `/implement-prd --resume [target-directory]` to continue an interrupted run; when the optional target directory is omitted, use the current working directory. `--resume=<target-directory>` is equivalent. Reject any other option or positional argument rather than guessing its meaning.
+
+Resume mode continues the exact plan recorded in `IMPLEMENTATION_CHECKLIST.md`; it does not start a new implementation or silently substitute another Confluence page.
 
 > **Don't do — stubs in production code.** Never write stub implementations (`pass`, `TODO`, `raise NotImplementedError`, `return 501`, empty function bodies) in Loop B production code. If a task can't be fully implemented because the plan is ambiguous or a dependency is missing, stop and surface the blocker instead of shipping a partial implementation that merely compiles.
 
@@ -48,22 +55,29 @@ If `.claude/settings.local.json` does not exist, create it with only the above c
 
 Remove this hook entry in Step 6 after the summary report is complete.
 
-## Step 1: Gather inputs
+## Step 1: Gather inputs and detect resume mode
 
-If the user has not already provided the following, use AskUserQuestion to ask:
+For a new run, if the user has not already provided the following, use AskUserQuestion to ask:
 
 1. **Target directory** — local path where code will be written (default: current working directory)
 2. **Language / stack** — if not inferable from the Implementation Plan's Target Files / Modules columns, ask which language/framework to use
 
 Do not ask for the Implementation Plan source — you will look it up from Confluence in Step 2. Do not ask about or reference an SDD or Test Plan document.
 
+For `--resume`:
+
+1. Resolve the target directory from the option or current working directory.
+2. Read `<target-directory>/IMPLEMENTATION_CHECKLIST.md` before asking any question. If it is missing, stop: `--resume requires IMPLEMENTATION_CHECKLIST.md; run /implement-prd first or provide the correct target directory.`
+3. Read the required `Source Implementation Plan` and `Target directory` metadata. If either is absent, or the recorded target differs from the resolved target after path normalization, stop and ask the user to repair the checklist or start a new run.
+4. Infer language/stack from the existing repository and plan. Ask only if it cannot be inferred.
+
 ## Step 2: Resolve cloud ID, fetch the Implementation Plan
 
 **2a. Resolve cloud ID** — call `getAccessibleAtlassianResources`. Use the first result's `id` as `cloudId` for all subsequent calls.
 
-**2b. Choose the space** — call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter. Present every returned space to the user via AskUserQuestion and ask them to choose the one containing the Implementation Plan.
+**2b. Choose the space** — for a new run, call `getConfluenceSpaces` with `cloudId`. Do NOT pass any `type` filter. Present every returned space to the user via AskUserQuestion and ask them to choose the one containing the Implementation Plan. For `--resume`, extract the Confluence page ID from the checklist's `Source Implementation Plan` link and skip space selection. If the link does not contain a usable page ID, fall back to the new-run space/page selection flow and ask the user to confirm the matching page.
 
-**2c. Choose the page** — call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. If there are more pages than fit in one response, paginate until all are listed. Present the full page list and ask the user to identify the **Implementation Plan** page (title typically "Implementation Plan: …"). Do not ask about SDD or Test Plan pages.
+**2c. Choose the page** — for a new run (or resume fallback), call `getPagesInConfluenceSpace` with `cloudId` and the selected space's `id`. If there are more pages than fit in one response, paginate until all are listed. Present the full page list and ask the user to identify the **Implementation Plan** page (title typically "Implementation Plan: …"). Do not ask about SDD or Test Plan pages. In normal resume mode, use the extracted page ID directly.
 
 **2d. Fetch the page** — call `getConfluencePage` for the Implementation Plan page with `contentFormat: "markdown"`.
 
@@ -83,11 +97,11 @@ Parse the Implementation Plan document for these sections (as produced by /plan-
 
 **From the Release Plan section**, record migration, feature-flag, backfill, rollout, monitoring, rollback, and documentation tasks not already captured as `Release`-type rows in the Task Breakdown.
 
-Present a summary to the user and confirm before proceeding:
+For a new run, present a summary to the user and confirm before proceeding:
 
 > "Found [N] tasks across [M] requirements and [K] test objectives. Shall I implement both in [target directory]?"
 
-**Write the implementation checklist.** Create `IMPLEMENTATION_CHECKLIST.md` in the target directory (or read it if it already exists — see the resuming edge case below) with one unchecked item per test objective and per task, grouped exactly like the source document:
+**Write or validate the implementation checklist.** For a new run, create `IMPLEMENTATION_CHECKLIST.md` in the target directory with one unchecked item per test objective and per task, grouped exactly like the source document:
 
 ```markdown
 # Implementation Checklist: [Implementation Plan title]
@@ -120,6 +134,12 @@ This file is the single source of truth for run progress. Update it — never ba
 - `- [ ]` — not started or not yet passing
 - `- [x]` — clean pass (reviewer approved, tests green)
 - `- [ ] ⚠️ [reason]` — accepted with `Needs Human Review` / `unresolved` after the maximum revision rounds; left **unchecked** so outstanding work stays visible even though the loop moved on
+
+For `--resume`, do not rewrite or add duplicate checklist entries. Validate that the fetched plan has exactly one matching checklist entry for every Task ID, one Loop A entry for every Test Case ID, and one System Tests entry for every Test Case ID. If IDs are missing, duplicated within a section, or the source link resolves to a different plan, stop and report the mismatch. Treat `- [x]` as complete; treat every unchecked or `⚠️` item as pending. Present the resume summary and continue without a new-run confirmation:
+
+> "Resuming [plan title] in [target directory]: [C] complete, [P] pending ([T] test objectives, [K] tasks). Next item: [ID]."
+
+Resume in the source document's Execution Order. Complete pending Loop A objectives before pending Loop B tasks. If all Loop A and Loop B items are checked but any System Tests are pending, go directly to B4. Before skipping any checked Loop B task, run its recorded validation command when available; if it fails, uncheck that task, append the failure reason, and resume it rather than trusting stale state.
 
 ---
 
@@ -196,7 +216,7 @@ Loop A result: [N] compiled, all failing before production code (expected).
 
 **Large plan (10+ tasks)**: process Loop B in batches of 5 following the Execution Order, report progress after each batch, and confirm before continuing. Loop A processes all test objective groups up front.
 
-**Resuming an interrupted run**: if `IMPLEMENTATION_CHECKLIST.md` already exists in the target directory when Step 3 begins, read it instead of creating a new one. Treat every `- [x]` item as already done and skip re-generating or re-reviewing it; resume Loop A/B at the first unchecked or `⚠️`-flagged item. Confirm with the user which items are being resumed versus redone before proceeding.
+**Resume requested but no checklist exists**: stop with the `--resume requires IMPLEMENTATION_CHECKLIST.md` message from Step 1. Do not create an empty checklist or begin a new run.
 
 ## Additional resources
 

@@ -16,7 +16,7 @@ Summarise the plan in ≤15 lines, then proceed without waiting. Keep this summa
 
 ## B2 — Task subagent (per task, in Execution Order)
 
-For each task, one at a time, spawn a fresh subagent (not a fork) via the Agent tool. Give it only what this task needs: its own row from the Task Breakdown, the relevant slice of B1's file map / interface contracts / build order, the repository discovery and validation commands from the Autonomous Execution Contract, and — only if this task's Dependencies reference an earlier task — that earlier task's one-line outcome from the checklist. Never pass a prior task's full generation, review, or test output forward.
+For each task, one at a time, spawn a fresh subagent (not a fork) via the Agent tool. In `--resume` mode, skip tasks that remain checked after the validation required in Step 3; run only unchecked or `⚠️`-flagged tasks in Execution Order. Give the subagent only what this task needs: its own row from the Task Breakdown, the relevant slice of B1's file map / interface contracts / build order, the repository discovery and validation commands from the Autonomous Execution Contract, and — only if this task's Dependencies reference an earlier task — that earlier task's one-line outcome from the checklist. Never pass a prior task's full generation, review, or test output forward.
 
 Use this prompt, substituting the bracketed task fields:
 
