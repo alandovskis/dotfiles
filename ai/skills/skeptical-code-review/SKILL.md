@@ -143,10 +143,37 @@ root cause; do not combine unrelated problems.
   abstraction merely to reduce lines.
 - Duplicates of another finding.
 
+## Optional `--fix` mode
+
+When invoked with `--fix`, complete the review and validate findings before
+editing. Subagents remain read-only; the primary reviewer owns every change.
+
+Fix only findings that are:
+
+- Confirmed by the review evidence and introduced or materially worsened by the
+  change under review.
+- Local, behavior-preserving except for correcting the defect, and within the
+  requested change's scope.
+- Safe to verify with focused tests, checks, or a direct reproduction.
+
+Do not use `--fix` for speculative concerns, broad redesigns, unverified security
+or compatibility assumptions, unrelated cleanup, dependency upgrades, or changes
+that require product, architectural, or operational approval. Report those as
+findings or residual risks instead.
+
+For every applied fix:
+
+1. State the finding and evidence that justified it.
+2. Make the smallest appropriate change.
+3. Run the narrowest relevant verification.
+4. Report the modified files, verification result, and remaining limitations.
+
 ## Final response
 
 Return findings first, ordered P0 through P3. If there are no actionable
 findings, say exactly: `No actionable findings.`
+
+In `--fix` mode, lead with `Applied fixes:` before any remaining findings.
 
 After findings, optionally include:
 
