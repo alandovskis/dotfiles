@@ -53,8 +53,6 @@ For each changed behavior, actively ask:
   retried?
 - What happens with concurrent requests, repeated delivery, cancellation, restart,
   stale state, or partial completion?
-- Could authorization, tenant boundaries, secrets, personal data, validation, or
-  output encoding be bypassed or exposed?
 - Could serialization, schema, API, database, configuration, or command-line
   compatibility break existing consumers?
 - Could the new ordering, caching, resource use, or algorithm become unsafe at
@@ -114,7 +112,53 @@ test evidence exercises meaningful behavior, including relevant failure,
 compatibility, contract, and side-effect paths. A missing layer is a finding only
 when it leaves a specific, credible, material risk untested.
 
-### 5. Delegate PRD-compliance assessment
+### 5. Delegate security assessment
+
+When delegated review is available and the change touches an entry point, trust
+boundary, identity or authorization decision, data handling, external interaction,
+configuration, dependency, or privileged operation, assign an independent
+subagent a bounded, read-only security assessment. The primary reviewer validates
+its evidence and decides whether to raise a finding. If delegation is unavailable,
+apply this same evidence and non-speculation standard directly.
+
+Ask the subagent to:
+
+- Define changed assets, actors, trust boundaries, entry points, privileges, and
+  data flows before looking for weaknesses.
+- Trace untrusted data and authority through the changed path, including
+  authentication, authorization, tenancy, validation, serialization, output
+  encoding, file, process, and network access, redirects, callbacks,
+  configuration, secrets, and sensitive-data logging or storage where applicable.
+- Compare old and new behavior to establish that a risk is introduced or
+  materially worsened by this change.
+- For each concern, demonstrate a concrete precondition, triggering input or
+  state, code path, observable security consequence, and affected boundary. Use a
+  safe local reproduction or existing test only when proportionate; never access
+  real secrets, production systems, or external targets.
+- Check relevant tests and controls, but do not infer security from framework
+  names, a sanitizer's presence, or a passing test alone.
+
+Return only substantiated concerns in this format:
+
+```text
+Asset/boundary | Location | Preconditions and attacker capability |
+Evidence path/input | Security consequence | Existing control and why insufficient |
+Smallest appropriate correction | Confidence
+```
+
+Record material uncertainty separately:
+
+```text
+Unverified boundary/assumption | Why evidence is unavailable | What would confirm it
+```
+
+Do not edit code, scan external systems, claim a vulnerability identifier,
+assume attacker access, or report a theoretical weakness without an end-to-end
+credible path. Omit concerns whose exploitability, affected boundary, or
+change-induced regression cannot be established. An unverified concern is a
+residual risk, not a finding.
+
+### 6. Delegate PRD-compliance assessment
 
 When a PRD is provided, linked, or discoverable from the change context and
 delegated review is available, assign an independent subagent a bounded,
@@ -150,7 +194,7 @@ or conflicts with supplied requirements, mark affected items `unknown`, cite the
 limitation, and request clarification only when it prevents a material conclusion.
 An unknown requirement is not a defect.
 
-### 6. Delegate simplification assessment
+### 7. Delegate simplification assessment
 
 When delegated review is available, assign an independent subagent a bounded,
 read-only search for behavior-preserving simplification opportunities. The primary
@@ -188,7 +232,7 @@ characteristics, or supported configuration unless the change explicitly permits
 it. Omit a candidate when reachability, callers, or required behavior cannot be
 verified.
 
-### 7. Delegate domain-model assessment
+### 8. Delegate domain-model assessment
 
 When the change affects domain behavior and delegated review is available, assign
 an independent subagent a bounded, read-only assessment of whether the
@@ -221,7 +265,7 @@ placement, or abstraction preferences without a specific business rule, boundary
 or failure path. Omit concerns when domain intent, ownership, or consistency
 requirements cannot be established from available evidence.
 
-### 8. Calibrate severity
+### 9. Calibrate severity
 
 Use these priorities:
 
@@ -287,6 +331,8 @@ After findings, optionally include:
 - `Checks:` relevant checks run and their results, plus meaningful limitations.
 - `Test evidence:` the validated behavior-to-evidence matrix or a concise summary
   of it when test coverage materially affects the review.
+- `Security evidence:` the validated security assessment or material residual
+  risks when security review materially affects the result.
 - `PRD compliance:` the validated requirements-to-evidence matrix when a PRD was
   available and materially informed the review.
 - `Simplification opportunities:` the validated candidate matrix, excluding
