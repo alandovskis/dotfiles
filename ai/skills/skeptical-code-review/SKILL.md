@@ -152,7 +152,40 @@ characteristics, or supported configuration unless the change explicitly permits
 it. Omit a candidate when reachability, callers, or required behavior cannot be
 verified.
 
-### 6. Calibrate severity
+### 6. Delegate domain-model assessment
+
+When the change affects domain behavior and delegated review is available, assign
+an independent subagent a bounded, read-only assessment of whether the
+implementation preserves the domain model. The primary reviewer validates its
+evidence and decides whether to raise a finding.
+
+Ask the subagent to:
+
+- Establish whether the repository, change context, or domain complexity actually
+  calls for DDD; do not assume every service or CRUD workflow needs it.
+- Trace domain terminology, business rules, invariants, state transitions, and
+  transaction boundaries through the changed code, callers, persistence, APIs,
+  and tests.
+- Where applicable, assess whether bounded-context boundaries, aggregate
+  consistency boundaries, entity/value-object semantics, domain events, and
+  repository abstractions match actual business behavior and ownership.
+- Identify only concrete mismatches that can cause violated invariants, ambiguous
+  ownership, inconsistent state, leaked domain concepts, or incompatible behavior.
+
+Return only substantiated concerns in this format:
+
+```text
+Domain rule/boundary | Location | Observed implementation and evidence |
+Credible consequence | Smallest appropriate correction | Confidence
+```
+
+Do not edit code. Do not require DDD patterns, tactical objects, repositories,
+events, factories, or layered architecture by name. Do not report terminology,
+placement, or abstraction preferences without a specific business rule, boundary,
+or failure path. Omit concerns when domain intent, ownership, or consistency
+requirements cannot be established from available evidence.
+
+### 7. Calibrate severity
 
 Use these priorities:
 
@@ -216,6 +249,8 @@ After findings, optionally include:
   of it when test coverage materially affects the review.
 - `Simplification opportunities:` the validated candidate matrix, excluding
   candidates that do not meet the finding standard.
+- `Domain-model evidence:` the validated domain-rule or boundary assessment when
+  it materially affects the review.
 
 Do not dilute findings with praise, a diff summary, or generic advice. Do not
 claim the change is correct; state only the level of confidence justified by the
