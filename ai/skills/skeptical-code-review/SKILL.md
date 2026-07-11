@@ -75,197 +75,21 @@ unavailable, or silently produce a wrong result.
 - Distinguish facts observed in code or test output from assumptions that need
   confirmation.
 
-### 4. Delegate test-evidence assessment
+### 4. Delegate focused assessments
 
-When delegated review is available and the change affects behavior, assign an
-independent subagent a bounded, read-only assessment of test evidence. The primary
-reviewer remains responsible for validating its evidence and deciding whether to
-raise a finding.
+Assign independent, bounded, read-only subagents as follows. Give each the full
+change context, relevant source and tests, and the named reference file. Validate
+their evidence before raising a finding.
 
-Ask the subagent to:
+| Trigger | Subagent reference |
+| --- | --- |
+| The change affects behavior | [Test-evidence assessment](references/test-evidence-assessment.md) |
+| The change touches a trust boundary, identity decision, data handling, external interaction, configuration, dependency, or privileged operation | [Security assessment](references/security-assessment.md) |
+| A PRD is provided, linked, or discoverable | [PRD-compliance assessment](references/prd-compliance-assessment.md) |
+| Always | [Simplification assessment](references/simplification-assessment.md) |
+| The change affects domain behavior | [Domain-model assessment](references/domain-model-assessment.md) |
 
-- Map each changed behavior and credible risk to evidence at the relevant test
-  boundary. Do not require every behavior to have all three layers.
-- Classify tests by what they actually exercise, not their filename or framework:
-  - **Unit:** an isolated component with controlled collaborators.
-  - **Integration:** an interaction across internal boundaries or with a real or
-    faithful test instance of a dependency.
-  - **System:** an externally observable workflow through production-like entry
-    points.
-- Inspect test setup, inputs, boundaries crossed, assertions, and relevant test
-  commands or configuration. Run narrow existing checks or coverage collection
-  only when available and proportionate.
-- Return a behavior-to-evidence matrix:
-
-  ```text
-  Changed behavior/risk | Unit evidence | Integration evidence | System evidence |
-  Observable/assertion | Command and result | Gap or confidence
-  ```
-
-- Cite test locations and command output or artifacts. Mark unavailable,
-  untested, blocked, and not applicable distinctly, with a reason.
-- Do not edit code, invent tests, infer a test layer from its name, or turn a
-  coverage number into a correctness claim.
-
-Treat line and branch coverage as supplementary signals only. Assess whether the
-test evidence exercises meaningful behavior, including relevant failure,
-compatibility, contract, and side-effect paths. A missing layer is a finding only
-when it leaves a specific, credible, material risk untested.
-
-### 5. Delegate security assessment
-
-When delegated review is available and the change touches an entry point, trust
-boundary, identity or authorization decision, data handling, external interaction,
-configuration, dependency, or privileged operation, assign an independent
-subagent a bounded, read-only security assessment. The primary reviewer validates
-its evidence and decides whether to raise a finding. If delegation is unavailable,
-apply this same evidence and non-speculation standard directly.
-
-Ask the subagent to:
-
-- Define changed assets, actors, trust boundaries, entry points, privileges, and
-  data flows before looking for weaknesses.
-- Trace untrusted data and authority through the changed path, including
-  authentication, authorization, tenancy, validation, serialization, output
-  encoding, file, process, and network access, redirects, callbacks,
-  configuration, secrets, and sensitive-data logging or storage where applicable.
-- Compare old and new behavior to establish that a risk is introduced or
-  materially worsened by this change.
-- For each concern, demonstrate a concrete precondition, triggering input or
-  state, code path, observable security consequence, and affected boundary. Use a
-  safe local reproduction or existing test only when proportionate; never access
-  real secrets, production systems, or external targets.
-- Check relevant tests and controls, but do not infer security from framework
-  names, a sanitizer's presence, or a passing test alone.
-
-Return only substantiated concerns in this format:
-
-```text
-Asset/boundary | Location | Preconditions and attacker capability |
-Evidence path/input | Security consequence | Existing control and why insufficient |
-Smallest appropriate correction | Confidence
-```
-
-Record material uncertainty separately:
-
-```text
-Unverified boundary/assumption | Why evidence is unavailable | What would confirm it
-```
-
-Do not edit code, scan external systems, claim a vulnerability identifier,
-assume attacker access, or report a theoretical weakness without an end-to-end
-credible path. Omit concerns whose exploitability, affected boundary, or
-change-induced regression cannot be established. An unverified concern is a
-residual risk, not a finding.
-
-### 6. Delegate PRD-compliance assessment
-
-When a PRD is provided, linked, or discoverable from the change context and
-delegated review is available, assign an independent subagent a bounded,
-read-only assessment of whether the change implements its applicable requirements.
-The primary reviewer validates its evidence and decides whether to raise a finding.
-
-Ask the subagent to:
-
-- Use only the identified PRD and explicitly linked acceptance criteria,
-  amendments, or issue context. Record the exact source, version or date if
-  known, and section or requirement identifiers used.
-- Establish applicability: map each changed behavior to a requirement, acceptance
-  criterion, explicit out-of-scope statement, or `No applicable PRD requirement
-  found`. Do not treat goals, examples, design ideas, or unstated expectations as
-  mandatory requirements.
-- Trace each applicable requirement through changed code, relevant callers,
-  contracts, and tests. Compare the required observable outcome with observed
-  implementation behavior.
-- Report only substantiated mismatches, omissions, or contradictions introduced
-  or materially worsened by the change.
-
-Return a requirements-to-evidence matrix:
-
-```text
-PRD requirement/source | Changed behavior/location | Implementation evidence |
-Test/observable evidence | Status (met/partial/not met/not applicable/unknown) |
-Gap or ambiguity | Confidence
-```
-
-Do not edit code, invent requirements, infer acceptance criteria from common
-practice, or decide product intent. If the PRD is unavailable, stale, ambiguous,
-or conflicts with supplied requirements, mark affected items `unknown`, cite the
-limitation, and request clarification only when it prevents a material conclusion.
-An unknown requirement is not a defect.
-
-### 7. Delegate simplification assessment
-
-When delegated review is available, assign an independent subagent a bounded,
-read-only search for behavior-preserving simplification opportunities. The primary
-reviewer validates its evidence and decides whether to raise a finding.
-
-Ask the subagent to examine changed code and its immediate dependencies for:
-
-- **KISS:** needless indirection, state, branching, or control flow that obscures
-  a straightforward implementation.
-- **YAGNI:** speculative generality, extension points, configuration, or
-  abstractions with no current caller or stated requirement.
-- Redundant logic, unreachable code, duplicate representations of the same state,
-  and obsolete compatibility paths that the change makes unnecessary.
-
-For every candidate, establish all of the following:
-
-1. Identify the concrete code and behavior it currently provides.
-2. Trace callers, configuration, public contracts, tests, and relevant runtime
-   paths to show that removal or consolidation preserves required behavior.
-3. Show a concrete payoff: fewer states, branches, dependencies, interfaces, or
-   maintenance paths—not merely a personal preference.
-4. State any unverified assumption or compatibility risk.
-
-Return only substantiated candidates in this format:
-
-```text
-Candidate | Location | Evidence of unnecessary complexity | Behavior-preserving
-simplification | Expected payoff | Compatibility assumptions | Confidence
-```
-
-Do not edit code. Do not propose style-only rewrites, renames, formatting,
-subjective cleanliness, broad redesigns, or simplifications that change public
-contracts, error handling, security boundaries, observability, performance
-characteristics, or supported configuration unless the change explicitly permits
-it. Omit a candidate when reachability, callers, or required behavior cannot be
-verified.
-
-### 8. Delegate domain-model assessment
-
-When the change affects domain behavior and delegated review is available, assign
-an independent subagent a bounded, read-only assessment of whether the
-implementation preserves the domain model. The primary reviewer validates its
-evidence and decides whether to raise a finding.
-
-Ask the subagent to:
-
-- Establish whether the repository, change context, or domain complexity actually
-  calls for DDD; do not assume every service or CRUD workflow needs it.
-- Trace domain terminology, business rules, invariants, state transitions, and
-  transaction boundaries through the changed code, callers, persistence, APIs,
-  and tests.
-- Where applicable, assess whether bounded-context boundaries, aggregate
-  consistency boundaries, entity/value-object semantics, domain events, and
-  repository abstractions match actual business behavior and ownership.
-- Identify only concrete mismatches that can cause violated invariants, ambiguous
-  ownership, inconsistent state, leaked domain concepts, or incompatible behavior.
-
-Return only substantiated concerns in this format:
-
-```text
-Domain rule/boundary | Location | Observed implementation and evidence |
-Credible consequence | Smallest appropriate correction | Confidence
-```
-
-Do not edit code. Do not require DDD patterns, tactical objects, repositories,
-events, factories, or layered architecture by name. Do not report terminology,
-placement, or abstraction preferences without a specific business rule, boundary,
-or failure path. Omit concerns when domain intent, ownership, or consistency
-requirements cannot be established from available evidence.
-
-### 9. Calibrate severity
+### 5. Calibrate severity
 
 Use these priorities:
 
