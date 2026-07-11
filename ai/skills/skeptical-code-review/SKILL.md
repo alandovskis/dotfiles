@@ -114,7 +114,43 @@ test evidence exercises meaningful behavior, including relevant failure,
 compatibility, contract, and side-effect paths. A missing layer is a finding only
 when it leaves a specific, credible, material risk untested.
 
-### 5. Delegate simplification assessment
+### 5. Delegate PRD-compliance assessment
+
+When a PRD is provided, linked, or discoverable from the change context and
+delegated review is available, assign an independent subagent a bounded,
+read-only assessment of whether the change implements its applicable requirements.
+The primary reviewer validates its evidence and decides whether to raise a finding.
+
+Ask the subagent to:
+
+- Use only the identified PRD and explicitly linked acceptance criteria,
+  amendments, or issue context. Record the exact source, version or date if
+  known, and section or requirement identifiers used.
+- Establish applicability: map each changed behavior to a requirement, acceptance
+  criterion, explicit out-of-scope statement, or `No applicable PRD requirement
+  found`. Do not treat goals, examples, design ideas, or unstated expectations as
+  mandatory requirements.
+- Trace each applicable requirement through changed code, relevant callers,
+  contracts, and tests. Compare the required observable outcome with observed
+  implementation behavior.
+- Report only substantiated mismatches, omissions, or contradictions introduced
+  or materially worsened by the change.
+
+Return a requirements-to-evidence matrix:
+
+```text
+PRD requirement/source | Changed behavior/location | Implementation evidence |
+Test/observable evidence | Status (met/partial/not met/not applicable/unknown) |
+Gap or ambiguity | Confidence
+```
+
+Do not edit code, invent requirements, infer acceptance criteria from common
+practice, or decide product intent. If the PRD is unavailable, stale, ambiguous,
+or conflicts with supplied requirements, mark affected items `unknown`, cite the
+limitation, and request clarification only when it prevents a material conclusion.
+An unknown requirement is not a defect.
+
+### 6. Delegate simplification assessment
 
 When delegated review is available, assign an independent subagent a bounded,
 read-only search for behavior-preserving simplification opportunities. The primary
@@ -152,7 +188,7 @@ characteristics, or supported configuration unless the change explicitly permits
 it. Omit a candidate when reachability, callers, or required behavior cannot be
 verified.
 
-### 6. Delegate domain-model assessment
+### 7. Delegate domain-model assessment
 
 When the change affects domain behavior and delegated review is available, assign
 an independent subagent a bounded, read-only assessment of whether the
@@ -185,7 +221,7 @@ placement, or abstraction preferences without a specific business rule, boundary
 or failure path. Omit concerns when domain intent, ownership, or consistency
 requirements cannot be established from available evidence.
 
-### 7. Calibrate severity
+### 8. Calibrate severity
 
 Use these priorities:
 
@@ -222,6 +258,10 @@ root cause; do not combine unrelated problems.
 - Style preferences, naming taste, or refactors with no demonstrated payoff.
 - Missing tests when the changed code is already adequately exercised, or when no
   specific untested risk can be named.
+- PRD-compliance claims without an identified applicable requirement and a
+  traceable implementation mismatch.
+- Treating an unavailable, ambiguous, contradictory, or non-applicable PRD as
+  evidence that the change is wrong.
 - Speculative race conditions, performance concerns, or security issues without a
   plausible path.
 - Pre-existing issues unless the change makes them worse or prevents a safe fix.
@@ -247,6 +287,8 @@ After findings, optionally include:
 - `Checks:` relevant checks run and their results, plus meaningful limitations.
 - `Test evidence:` the validated behavior-to-evidence matrix or a concise summary
   of it when test coverage materially affects the review.
+- `PRD compliance:` the validated requirements-to-evidence matrix when a PRD was
+  available and materially informed the review.
 - `Simplification opportunities:` the validated candidate matrix, excluding
   candidates that do not meet the finding standard.
 - `Domain-model evidence:` the validated domain-rule or boundary assessment when
