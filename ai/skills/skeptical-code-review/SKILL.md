@@ -77,7 +77,44 @@ unavailable, or silently produce a wrong result.
 - Distinguish facts observed in code or test output from assumptions that need
   confirmation.
 
-### 4. Calibrate severity
+### 4. Delegate test-evidence assessment
+
+When delegated review is available and the change affects behavior, assign an
+independent subagent a bounded, read-only assessment of test evidence. The primary
+reviewer remains responsible for validating its evidence and deciding whether to
+raise a finding.
+
+Ask the subagent to:
+
+- Map each changed behavior and credible risk to evidence at the relevant test
+  boundary. Do not require every behavior to have all three layers.
+- Classify tests by what they actually exercise, not their filename or framework:
+  - **Unit:** an isolated component with controlled collaborators.
+  - **Integration:** an interaction across internal boundaries or with a real or
+    faithful test instance of a dependency.
+  - **System:** an externally observable workflow through production-like entry
+    points.
+- Inspect test setup, inputs, boundaries crossed, assertions, and relevant test
+  commands or configuration. Run narrow existing checks or coverage collection
+  only when available and proportionate.
+- Return a behavior-to-evidence matrix:
+
+  ```text
+  Changed behavior/risk | Unit evidence | Integration evidence | System evidence |
+  Observable/assertion | Command and result | Gap or confidence
+  ```
+
+- Cite test locations and command output or artifacts. Mark unavailable,
+  untested, blocked, and not applicable distinctly, with a reason.
+- Do not edit code, invent tests, infer a test layer from its name, or turn a
+  coverage number into a correctness claim.
+
+Treat line and branch coverage as supplementary signals only. Assess whether the
+test evidence exercises meaningful behavior, including relevant failure,
+compatibility, contract, and side-effect paths. A missing layer is a finding only
+when it leaves a specific, credible, material risk untested.
+
+### 5. Calibrate severity
 
 Use these priorities:
 
@@ -131,6 +168,8 @@ After findings, optionally include:
 - `Residual risks:` assumptions or unverified paths that are important but not
   proven defects.
 - `Checks:` relevant checks run and their results, plus meaningful limitations.
+- `Test evidence:` the validated behavior-to-evidence matrix or a concise summary
+  of it when test coverage materially affects the review.
 
 Do not dilute findings with praise, a diff summary, or generic advice. Do not
 claim the change is correct; state only the level of confidence justified by the
