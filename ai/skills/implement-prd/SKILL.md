@@ -7,6 +7,8 @@ description: |-
   Implementation Breakdown into executable tests; Loop B implements the Task
   Breakdown gated by unit tests and integration tests. The Implementation Plan
   is the only input; this skill does not read the SDD or Test Plan documents.
+  After implementation, publishes an implementation report to Confluence as a
+  child of the source Implementation Plan.
   Trigger when user says: "implement the implementation plan", "implement from
   the implementation plan", "code up this implementation plan", "build from the
   Confluence implementation plan", "/implement-prd", "/implement-prd --resume",
@@ -130,9 +132,9 @@ Read `references/loop-b.md` now and follow it completely (B1 Planner → B2 Task
 
 ---
 
-## Step 6: Summary report
+## Step 6: Assemble and publish the implementation report
 
-Confirm `IMPLEMENTATION_CHECKLIST.md` reflects the final state of every item (do not delete it — it is the durable record of this run). Present a concise implementation report:
+Confirm `IMPLEMENTATION_CHECKLIST.md` reflects the final state of every item (do not delete it — it is the durable record of this run). Assemble this concise implementation report:
 
 ```
 ## Implementation complete
@@ -172,6 +174,25 @@ Loop A result: [N] compiled, all failing before production code (expected).
 - [ ] Wire up to CI pipeline (unit, integration, system test stages)
 - [ ] Complete Release Plan tasks (migrations, flags, rollout, monitoring) if not yet executed
 ```
+
+Convert the assembled report to Confluence HTML. Use `<h2>` and `<h3>` for headings, `<table>`/`<thead>`/`<tbody>`/`<tr>`/`<th>`/`<td>` for tables, `<ul>`/`<li>` for lists, `<strong>` for bold, and `<code>` for commands, paths, and IDs. Do not wrap the content in `<html>`, `<head>`, or `<body>` tags.
+
+Publish the report in the same Confluence space as the source Implementation Plan and make it a child of that plan. Call `createConfluencePage` with:
+
+- `cloudId` — resolved in Step 2
+- `spaceId` — from the fetched source Implementation Plan
+- `parentId` — the source Implementation Plan page ID
+- `title` — `"Implementation Report: [Implementation Plan title without the \"Implementation Plan: \" prefix]"`
+- `body` — the assembled report as HTML
+- `contentFormat` — `"html"`
+
+If a child page with that title already exists, update it with `updateConfluencePage` so resumed or repeated runs keep one durable report; do not create a duplicate or date-suffixed page. Preserve the existing page's required version metadata when the connector requires it.
+
+Confluence publication is part of completion. If creating or updating the report fails, retry after refreshing the source page, destination page, and required version metadata. If it still fails, report the error and do not claim the run is complete.
+
+After publication succeeds, present the same concise report to the user and include:
+
+> "✅ Implementation report published: [Confluence page URL]"
 
 ---
 
