@@ -1,1 +1,5 @@
-# Shared shell functions (bash + zsh). Empty for now.
+# Shared shell functions (bash + zsh).
+
+unblock() {
+    kill "$(lsof -ti:"$1")"
+}
