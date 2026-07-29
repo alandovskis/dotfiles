@@ -12,14 +12,16 @@ Personal dotfiles for shell, editor, Git, AI agent, and small tool configuration
 - `kdiff3/.kdiff3rc` — KDiff3 preferences.
 - `macos/` and `linux/` — platform-specific config files.
 - `ruby/.gemrc` and `ruby/.rspec` — Ruby tool defaults.
-- `zsh/` — zsh environment, login config, rc file, and aliases.
+- `shell/.shell/` — aliases, functions, and env vars shared between bash and zsh.
+- `zsh/` — zsh environment, login config, and rc file (sources `shell/.shell/`).
+- `bash/` — bash profile and rc file (sources `shell/.shell/`).
 
 ## Setup
 
 Use GNU Stow for the simple packages you want:
 
 ```sh
-stow -t "$HOME" git zsh curl ruby jetbrains kdiff3
+stow -t "$HOME" git zsh bash shell curl ruby jetbrains kdiff3
 ```
 
 Link AI-agent config explicitly:
@@ -38,7 +40,9 @@ ln -sf "$(pwd)/git/.gitconfig" "$HOME/.gitconfig"
 ln -sf "$(pwd)/zsh/.zshenv" "$HOME/.zshenv"
 ln -sf "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
 ln -sf "$(pwd)/zsh/.zlogin" "$HOME/.zlogin"
-ln -sfn "$(pwd)/zsh/.zsh" "$HOME/.zsh"
+ln -sf "$(pwd)/bash/.bashrc" "$HOME/.bashrc"
+ln -sf "$(pwd)/bash/.bash_profile" "$HOME/.bash_profile"
+ln -sfn "$(pwd)/shell/.shell" "$HOME/.shell"
 ln -sf "$(pwd)/curl/.curlrc" "$HOME/.curlrc"
 ln -sf "$(pwd)/ruby/.gemrc" "$HOME/.gemrc"
 ln -sf "$(pwd)/ruby/.rspec" "$HOME/.rspec"

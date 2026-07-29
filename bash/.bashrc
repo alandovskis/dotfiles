@@ -3,8 +3,5 @@ source "${HOME}/.shell/aliases.sh"
 source "${HOME}/.shell/functions.sh"
 export PATH="$HOME/.local/bin:$PATH"
 
-alias zshconfig="${EDITOR} ~/.zshrc"
-alias zshsource="source ~/.zshrc"
-
-eval "$(starship init zsh)"
-eval "$(direnv hook zsh)"
+alias bashconfig="${EDITOR:-vim} ~/.bashrc"
+alias bashsource="source ~/.bashrc"

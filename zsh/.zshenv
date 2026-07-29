@@ -10,13 +10,7 @@ export PATH
 # | Variables |
 # -------------
 # General
-export DOCUMENT_DIR="$HOME/Documents"
-export MOVIE_DIR="$HOME/Movies"
-export IMAGE_DIR="$HOME/Photos"
-export MUSIC_DIR="$HOME/Music"
 export SITE_DIR="$HOME/Sites"
-export DOWNLOAD_DIR="$HOME/Downloads"
-export APPLICATION_DIR="/Applications"
 export DROPBOX_DIR="$HOME/Dropbox"
 
 # Interests

@@ -1,6 +1,4 @@
-alias zshconfig="${EDITOR} ~/.zshrc"
-alias zshsource="source ~/.zshrc"
-
+# Directory shortcuts
 alias app="cd $APPLICATION_DIR"
 alias doc="cd $DOCUMENT_DIR"
 alias mov="cd $MOVIE_DIR"
@@ -9,8 +7,8 @@ alias mus="cd $MUSIC_DIR"
 alias dow="cd $DOWNLOAD_DIR"
 
 # ls
-alias ls=" ls"
-alias ll='ls -l'
+alias ls='eza --color=always --icons --group-directories-first'
+alias ll='eza -la --color=always --icons --group-directories-first'
 alias la='ls -al'
 
 # Ping
