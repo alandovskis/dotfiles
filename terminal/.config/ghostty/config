@@ -1,0 +1,60 @@
+# ============================================================
+#  Ghostty config — cmux optimized version
+# ============================================================
+
+# --- Theme & Colors ---
+# Catppuccin Frappe: Dark high-contrast, easy on the eyes for long coding sessions
+theme = Catppuccin Frappe
+
+# --- Font ---
+# JetBrains Mono Nerd Font: Full Nerd Font icons, compatible with Starship
+font-family = "JetBrains Mono Nerd Font"
+font-size = 14
+font-thicken = true
+
+# --- Opacity (pairs well with cmux sidebar for aesthetics) ---
+background-opacity = 0.95
+background-blur = macos-glass-regular
+
+# --- Window & Padding ---
+# Cmux has a sidebar on the left, so increase padding to prevent text from sticking to the edge
+window-padding-x = 16
+window-padding-y = 12
+window-padding-balance = true
+window-padding-color = extend
+window-height = 35
+window-width = 120
+macos-titlebar-style = transparent
+window-decoration = auto
+window-theme = light
+window-colorspace = display-p3
+
+# Key: Hide Ghostty's own tab bar and use cmux's sidebar instead
+window-show-tab-bar = never
+
+# --- Splitting ---
+# Unfocused splits dim for clear awareness of the current one
+unfocused-split-opacity = 0.7
+unfocused-split-fill = 1e1e2e
+split-divider-color = 45475a
+
+# --- Cursor ---
+cursor-style = bar
+cursor-style-blink = true
+cursor-color = f5e0dc
+
+# --- Selection Colors ---
+selection-background = 585b70
+selection-foreground = cdd6f4
+
+# --- Scrolling ---
+scrollback-limit = 50000
+
+# --- Keybindings (Practical) ---
+macos-option-as-alt = true
+keybind = alt+left=esc:b
+keybind = alt+right=esc:f
+keybind = cmd+left=text:\x01
+keybind = cmd+right=text:\x05
+keybind = alt+backspace=text:\x17
+keybind = cmd+k=clear_screen

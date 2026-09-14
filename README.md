@@ -8,6 +8,7 @@ Personal dotfiles for shell, editor, Git, AI agent, and small tool configuration
 - `ai/.codex/` — Codex config and a `skills` symlink to `../.claude/skills`.
 - `curl/.curlrc` — curl defaults.
 - `git/.gitconfig` — Git aliases, delta pager, and merge/diff defaults.
+- `terminal/.config/ghostty/config` — Ghostty terminal config.
 - `jetbrains/.ideavimrc` — IdeaVim mappings.
 - `kdiff3/.kdiff3rc` — KDiff3 preferences.
 - `macos/` and `linux/` — platform-specific config files.
@@ -21,7 +22,7 @@ Personal dotfiles for shell, editor, Git, AI agent, and small tool configuration
 Use GNU Stow for the simple packages you want:
 
 ```sh
-stow -t "$HOME" git zsh bash shell curl ruby jetbrains kdiff3
+stow -t "$HOME" git zsh bash shell curl ruby jetbrains kdiff3 terminal
 ```
 
 Link AI-agent config explicitly:
@@ -37,6 +38,8 @@ Or create individual symlinks for everything:
 
 ```sh
 ln -sf "$(pwd)/git/.gitconfig" "$HOME/.gitconfig"
+mkdir -p "$HOME/.config/ghostty"
+ln -sf "$(pwd)/terminal/.config/ghostty/config" "$HOME/.config/ghostty/config"
 ln -sf "$(pwd)/zsh/.zshenv" "$HOME/.zshenv"
 ln -sf "$(pwd)/zsh/.zshrc" "$HOME/.zshrc"
 ln -sf "$(pwd)/zsh/.zlogin" "$HOME/.zlogin"
