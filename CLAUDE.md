@@ -8,7 +8,4 @@ See [STRUCTURE.md](STRUCTURE.md) for the directory layout.
 
 ## Setup
 
-```sh
-stow -t "$HOME" git zsh bash shell curl gem rspec jetbrains kdiff3
-ln -sf "$(pwd)/claude/.claude" "$HOME/.claude"
-```
+See [README.md](README.md) for setup instructions.
