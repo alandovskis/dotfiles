@@ -1,20 +1,12 @@
+---
+sidebar_position: 1
+---
+
 # dotfiles
 
 Personal dotfiles for shell, editor, Git, AI agent, and small tool configuration.
 
-## Layout
-
-See [STRUCTURE.md](STRUCTURE.md) for the directory layout.
-
-## Docs site
-
-This README and STRUCTURE.md are also published as a browsable [Docusaurus](https://docusaurus.io) site in [`docs-site/`](docs-site). Run it locally with:
-
-```sh
-cd docs-site
-npm install
-npm start
-```
+See [Directory Structure](./structure.md) for the directory layout.
 
 ## Setup
 
