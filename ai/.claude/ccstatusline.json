@@ -1,0 +1,94 @@
+{
+  "version": 4,
+  "lines": [
+    [
+      {
+        "id": "1",
+        "type": "model",
+        "color": "cyan"
+      },
+      {
+        "id": "e74df744-15ed-4318-8baa-fdc8c93d7155",
+        "type": "thinking-effort",
+        "backgroundColor": "bgBrightRed"
+      },
+      {
+        "id": "140116df-5ef2-44ec-ab5a-6df480035718",
+        "type": "tokens-input",
+        "backgroundColor": "bgMagenta"
+      },
+      {
+        "id": "7440f625-4f81-4bf5-b599-85339cf69faf",
+        "type": "tokens-cached",
+        "backgroundColor": "bgBrightBlack"
+      },
+      {
+        "id": "3c37209e-b967-478e-b881-40379d30dac9",
+        "type": "tokens-output",
+        "backgroundColor": "bgBrightGreen"
+      },
+      {
+        "id": "f9c3e3f9-5fcc-421f-ba67-18f1dd2f456c",
+        "type": "context-bar",
+        "backgroundColor": "bgWhite"
+      },
+      {
+        "id": "3",
+        "type": "context-length",
+        "color": "brightBlack"
+      },
+      {
+        "id": "5",
+        "type": "git-branch",
+        "color": "magenta"
+      },
+      {
+        "id": "2913ae28-2cc6-4002-8655-169d5607c7e2",
+        "type": "current-working-dir"
+      },
+      {
+        "id": "598e67ed-6ddc-41ce-a284-b7ed890bb74a",
+        "type": "sandbox-status"
+      },
+      {
+        "id": "615523dc-7b1a-41b6-949d-5ef9a937bc53",
+        "type": "git-review"
+      },
+      {
+        "id": "c402f6e1-787b-473f-9f5e-640f6128eafb",
+        "type": "worktree-name"
+      },
+      {
+        "id": "caf5a9d0-b335-420c-8019-fdc48d626b1b",
+        "type": "session-cost",
+        "backgroundColor": "bgBrightWhite"
+      }
+    ],
+    [],
+    []
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "defaultPaddingSide": "both",
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "gitCacheTtlSeconds": 5,
+  "minimalistMode": false,
+  "powerline": {
+    "enabled": true,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": true,
+    "continueThemeAcrossLines": true,
+    "theme": "dracula"
+  },
+  "defaultPadding": " ",
+  "exportedBy": "2.2.29"
+}
