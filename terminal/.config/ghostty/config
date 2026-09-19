@@ -3,8 +3,8 @@
 # ============================================================
 
 # --- Theme & Colors ---
-# Catppuccin Frappe: Dark high-contrast, easy on the eyes for long coding sessions
-theme = Catppuccin Frappe
+# Auto-switches with macOS appearance: Dracula in dark mode, Solarized in light mode
+theme = light:iTerm2 Solarized Light,dark:Dracula
 
 # --- Font ---
 # JetBrains Mono Nerd Font: Full Nerd Font icons, compatible with Starship
@@ -26,11 +26,10 @@ window-height = 35
 window-width = 120
 macos-titlebar-style = transparent
 window-decoration = auto
-window-theme = light
 window-colorspace = display-p3
 
-# Key: Hide Ghostty's own tab bar and use cmux's sidebar instead
-window-show-tab-bar = never
+# Use Ghostty's own tab bar
+window-show-tab-bar = always
 
 # --- Splitting ---
 # Unfocused splits dim for clear awareness of the current one
