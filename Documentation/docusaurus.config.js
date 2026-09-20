@@ -46,7 +46,7 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          editUrl: 'https://github.com/alandovskis/dotfiles/tree/main/docs-site/',
+          editUrl: 'https://github.com/alandovskis/dotfiles/tree/main/Documentation/',
         },
         blog: false,
         theme: {

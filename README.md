@@ -8,10 +8,10 @@ See [STRUCTURE.md](STRUCTURE.md) for the directory layout.
 
 ## Docs site
 
-This README and STRUCTURE.md are also published as a browsable [Docusaurus](https://docusaurus.io) site in [`docs-site/`](docs-site). Run it locally with:
+This README and STRUCTURE.md are also published as a browsable [Docusaurus](https://docusaurus.io) site in [`Documentation/`](Documentation). Run it locally with:
 
 ```sh
-cd docs-site
+cd Documentation
 npm install
 npm start
 ```
