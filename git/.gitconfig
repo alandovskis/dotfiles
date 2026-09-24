@@ -28,6 +28,17 @@
 [merge]
     conflictstyle = diff3
 [diff]
-    colorMoved = default
+	colorMoved = default
+	algorithm = histogram
 [init]
 	defaultBranch = main
+[pull]
+	rebase = true
+[rerere]
+	enabled = true
+[rebase]
+	autosquash = true
+[branch]
+	sort = -committerdate
+[fetch]
+	prune = true
