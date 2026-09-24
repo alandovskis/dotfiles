@@ -328,3 +328,7 @@ self-atuin-ai-question-mark() {
 # Set up keybindings
 zle -N self-atuin-ai-question-mark
 bindkey '?' self-atuin-ai-question-mark # Question mark
+
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^X^E' edit-command-line
