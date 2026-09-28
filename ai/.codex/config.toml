@@ -1,7 +1,6 @@
 model = "gpt-5.6-terra"
 personality = "pragmatic"
 model_reasoning_effort = "medium"
-approval_policy = "untrusted"
 
 [projects."/Users/alex/src/ansible"]
 trust_level = "trusted"
