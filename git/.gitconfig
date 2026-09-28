@@ -7,9 +7,11 @@
     pager = delta
 	whitespace = trailing-space,space-before-tab
 [alias]
+	amend = commit --amend
 	br = branch
 	ci = commit
 	co = checkout
+	df = diff
 	detach = !sh -c 'git checkout $(git rev-parse ${1:-HEAD})' --
 	last = log -1 HEAD
 	lol = log --pretty=oneline --abbrev-commit --graph --decorate
